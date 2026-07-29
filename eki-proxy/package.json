@@ -1,0 +1,13 @@
+{
+  "name": "eki-proxy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "実際の乗換案内API(駅すぱあと/ジョルダン等)への中継サーバー雛形。未接続・要APIキー。",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
