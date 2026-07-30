@@ -4,36 +4,53 @@
 <meta charset="UTF-8">
 <title>合流駅ファインダー</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f1f2f6;
+    --bg: #f6f4fb;
     --card: #ffffff;
-    --accent: #4f46e5;
-    --accent-2: #7c3aed;
-    --accent-soft: #eef0ff;
-    --text: #14171f;
-    --muted: #6b7280;
-    --border: #e3e5ea;
+    --accent: #6d28d9;
+    --accent-2: #db2777;
+    --accent-soft: #f1ebfd;
+    --text: #201a2e;
+    --muted: #7a7690;
+    --border: #eae6f5;
     --good: #16a34a;
     --warn: #b45309;
-    --danger: #dc2626;
-    --danger-soft: #fef2f2;
+    --warn-soft: #fff7ec;
+    --danger: #e11d48;
+    --danger-soft: #fff1f3;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    font-family: "Zen Maru Gothic", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.45;
     font-size: 15px;
   }
   header {
-    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #6d28d9, #a21caf 55%, #db2777);
     color: #fff;
-    padding: 16px 16px 14px;
+    padding: 18px 16px 16px;
   }
+  header::before, header::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(2px);
+    opacity: 0.35;
+    background: #fff;
+  }
+  header::before { width: 140px; height: 140px; top: -70px; right: -30px; }
+  header::after { width: 90px; height: 90px; bottom: -50px; left: 10%; opacity: 0.18; }
   header .head-row {
+    position: relative;
     display: flex;
     align-items: baseline;
     gap: 8px;
@@ -41,8 +58,8 @@
     max-width: 720px;
     margin: 0 auto;
   }
-  header h1 { margin: 0; font-size: 1.15rem; white-space: nowrap; }
-  header p { margin: 2px 0 0; opacity: 0.92; font-size: 0.78rem; max-width: 720px; margin-left: auto; margin-right: auto; }
+  header h1 { margin: 0; font-size: 1.2rem; font-weight: 900; white-space: nowrap; }
+  header p { position: relative; margin: 3px 0 0; opacity: 0.95; font-size: 0.78rem; max-width: 720px; margin-left: auto; margin-right: auto; }
   main {
     max-width: 720px;
     margin: 0 auto;
@@ -51,14 +68,15 @@
   .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 14px 14px 16px;
     margin-bottom: 12px;
-    box-shadow: 0 1px 2px rgba(20,23,31,0.04);
+    box-shadow: 0 2px 10px rgba(109,40,217,0.05);
   }
   .card h2 {
     margin: 0 0 10px;
     font-size: 0.92rem;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -68,6 +86,9 @@
     font-size: 0.72rem;
     font-weight: 500;
     color: var(--muted);
+    background: var(--accent-soft);
+    padding: 2px 8px;
+    border-radius: 999px;
   }
   .people-grid {
     display: grid;
@@ -76,9 +97,9 @@
   }
   .person {
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 8px 9px 9px;
-    background: #fafbfc;
+    background: #fbfaff;
   }
   .person-head {
     display: flex;
@@ -95,8 +116,9 @@
     padding: 2px 2px;
     color: var(--text);
     min-width: 0;
+    font-family: inherit;
   }
-  .person-head .p-name::placeholder { color: #9aa0ab; font-weight: 600; }
+  .person-head .p-name::placeholder { color: #a79fc2; font-weight: 600; }
   .remove-btn {
     flex-shrink: 0;
     width: 22px;
@@ -128,14 +150,23 @@
   .station-field input {
     width: 100%;
     padding: 6px 7px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
     font-size: 0.85rem;
     background: #fff;
+    font-family: inherit;
+  }
+  .station-field input:focus {
+    outline: none;
+    border-color: var(--accent);
   }
   .station-field input.invalid {
     border-color: var(--danger);
     background: var(--danger-soft);
+  }
+  .station-field input.override {
+    border-color: #d97706;
+    background: var(--warn-soft);
   }
   .field-error {
     font-size: 0.66rem;
@@ -143,6 +174,7 @@
     margin-top: 2px;
     min-height: 0;
   }
+  .field-error.note { color: var(--warn); }
   .field-error:empty { display: none; }
   .suggestions {
     display: none;
@@ -153,9 +185,9 @@
     right: 0;
     background: #fff;
     border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 0 6px 18px rgba(20,23,31,0.12);
-    max-height: 180px;
+    border-radius: 10px;
+    box-shadow: 0 8px 22px rgba(32,26,46,0.14);
+    max-height: 200px;
     overflow-y: auto;
     list-style: none;
     margin: 0;
@@ -163,7 +195,7 @@
   }
   .suggestions li {
     padding: 6px 8px;
-    border-radius: 6px;
+    border-radius: 7px;
     font-size: 0.83rem;
     cursor: pointer;
   }
@@ -171,17 +203,26 @@
   .suggestions li.active {
     background: var(--accent-soft);
   }
+  .suggestions li.no-match-option {
+    color: var(--warn);
+    font-size: 0.76rem;
+    border-top: 1px solid var(--border);
+    margin-top: 2px;
+    padding-top: 8px;
+  }
+  .suggestions li.no-match-option:hover { background: var(--warn-soft); }
   .add-person-btn {
     margin-top: 8px;
     width: 100%;
     padding: 8px;
-    border: 1px dashed #c7cbd6;
-    border-radius: 9px;
+    border: 1.5px dashed #cabbec;
+    border-radius: 10px;
     background: #fff;
     color: var(--accent);
     font-weight: 700;
     font-size: 0.82rem;
     cursor: pointer;
+    font-family: inherit;
   }
   .add-person-btn:disabled {
     opacity: 0.4;
@@ -196,18 +237,20 @@
   }
   .mode-tabs button {
     padding: 9px 6px;
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     background: #fff;
-    border-radius: 9px;
+    border-radius: 999px;
     cursor: pointer;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: var(--text);
+    font-family: inherit;
   }
   .mode-tabs button.active {
-    background: var(--accent);
-    border-color: var(--accent);
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    border-color: transparent;
     color: #fff;
+    box-shadow: 0 3px 10px rgba(109,40,217,0.28);
   }
   .mode-desc {
     font-size: 0.76rem;
@@ -223,24 +266,27 @@
   }
   .inline-row input[type="time"] {
     padding: 5px 7px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
     font-size: 0.82rem;
+    font-family: inherit;
   }
   .run-btn {
     display: block;
     width: 100%;
-    padding: 12px;
+    padding: 13px;
     border: none;
-    border-radius: 10px;
-    background: var(--accent);
+    border-radius: 12px;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
     color: #fff;
     font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
-    margin-top: 8px;
+    margin-top: 10px;
+    font-family: inherit;
+    box-shadow: 0 4px 14px rgba(109,40,217,0.3);
   }
-  .run-btn:active { opacity: 0.85; }
+  .run-btn:active { opacity: 0.88; transform: translateY(1px); }
   .form-error {
     font-size: 0.78rem;
     color: var(--danger);
@@ -251,23 +297,23 @@
   .notice {
     font-size: 0.72rem;
     color: var(--warn);
-    background: #fff8ec;
+    background: var(--warn-soft);
     border: 1px solid #f1dcb0;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 7px 9px;
     margin-top: 8px;
   }
   #results { margin-top: 2px; }
   .result-item {
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 10px 12px;
     margin-bottom: 8px;
     background: #fff;
   }
   .result-item.rank-1 {
     border-color: var(--accent);
-    background: var(--accent-soft);
+    background: linear-gradient(135deg, var(--accent-soft), #fdf2f8);
   }
   .result-head {
     display: flex;
@@ -282,10 +328,11 @@
   }
   .result-head .badge {
     font-size: 0.68rem;
-    background: var(--accent);
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
     color: #fff;
-    padding: 2px 7px;
+    padding: 2px 8px;
     border-radius: 999px;
+    font-weight: 700;
   }
   .result-head .score {
     font-size: 0.78rem;
@@ -299,7 +346,11 @@
     font-size: 0.76rem;
     color: var(--text);
   }
-  .per-person .approx { color: var(--muted); }
+  .result-note {
+    font-size: 0.68rem;
+    color: var(--warn);
+    margin-top: 6px;
+  }
   .empty-hint {
     color: var(--muted);
     font-size: 0.84rem;
@@ -311,6 +362,26 @@
     color: var(--muted);
     font-size: 0.7rem;
     padding: 8px 16px 28px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17131f;
+      --card: #221c30;
+      --accent: #a78bfa;
+      --accent-2: #f472b6;
+      --accent-soft: #2e2543;
+      --text: #f1edfb;
+      --muted: #9c93b5;
+      --border: #362c4a;
+      --warn-soft: #382b17;
+      --danger-soft: #3a1620;
+    }
+    .person { background: #241d34; }
+    .station-field input,
+    .add-person-btn,
+    .mode-tabs button,
+    .suggestions { background: #1c1729; color: var(--text); }
+    .result-item { background: #1c1729; }
   }
 </style>
 </head>
@@ -444,6 +515,41 @@ const STATIONS = [
   ["若松河田",35.6961,139.7181],["牛込柳町",35.6994,139.7256],["牛込神楽坂",35.7008,139.7358],
   ["春日",35.7061,139.7522],["本郷三丁目",35.7075,139.7594],["上野御徒町",35.7075,139.7742],
   ["新御徒町",35.7061,139.7794],["蔵前",35.7047,139.7889],
+  // 東急多摩川線
+  ["沼部",35.5931,139.6797],["鵜の木",35.5794,139.6839],["下丸子",35.5661,139.6961],
+  ["武蔵新田",35.5647,139.7039],["矢口渡",35.5619,139.7128],
+  // 東急池上線
+  ["大崎広小路",35.6228,139.7258],["戸越銀座",35.6122,139.7106],["荏原中延",35.6083,139.7028],
+  ["旗の台",35.6053,139.6931],["北千束",35.6011,139.6864],["洗足池",35.5961,139.6858],
+  ["石川台",35.5875,139.6900],["雪が谷大塚",35.5822,139.6939],["御嶽山",35.5761,139.6989],
+  ["久が原",35.5711,139.7011],["千鳥町",35.5647,139.7000],["池上",35.5730,139.7120],
+  ["蓮沼",35.5658,139.7133],
+  // 東急大井町線
+  ["下神明",35.6047,139.7278],["戸越公園",35.6067,139.7186],["九品仏",35.6053,139.6683],
+  ["尾山台",35.6039,139.6592],["等々力",35.6039,139.6522],["上野毛",35.6042,139.6425],
+  // 東急目黒線
+  ["不動前",35.6289,139.7064],["武蔵小山",35.6169,139.6961],["西小山",35.6122,139.6875],
+  ["洗足",35.6072,139.6825],["大岡山",35.6067,139.6811],["奥沢",35.6019,139.6650],
+  // 東急世田谷線
+  ["若林",35.6486,139.6650],["松陰神社前",35.6497,139.6592],["世田谷",35.6469,139.6531],
+  ["上町",35.6444,139.6486],["宮の坂",35.6394,139.6444],["山下",35.6344,139.6394],
+  ["桜新町",35.6303,139.6403],
+  // 京王井の頭線
+  ["永福町",35.6822,139.6367],["西永福",35.6819,139.6300],["浜田山",35.6797,139.6197],
+  ["高井戸",35.6822,139.6067],["富士見ヶ丘",35.6839,139.5992],["久我山",35.6883,139.5900],
+  ["三鷹台",35.6975,139.5764],["井の頭公園",35.7014,139.5722],
+  // 西武池袋線
+  ["椎名町",35.7350,139.7003],["東長崎",35.7369,139.6867],["江古田",35.7369,139.6794],
+  ["桜台",35.7392,139.6592],["中村橋",35.7442,139.6478],["富士見台",35.7469,139.6394],
+  ["練馬高野台",35.7469,139.6306],
+  // 東武東上線
+  ["大山",35.7378,139.7189],["ときわ台",35.7539,139.6733],["上板橋",35.7469,139.6650],
+  ["下赤塚",35.7736,139.6408],
+  // 京成本線
+  ["町屋",35.7361,139.7825],["千住大橋",35.7397,139.7961],["京成関屋",35.7439,139.8003],
+  ["堀切菖蒲園",35.7461,139.8267],["お花茶屋",35.7461,139.8347],["青砥",35.7472,139.8489],
+  ["京成高砂",35.7511,139.8511],["江戸川",35.7317,139.8931],["市川真間",35.7228,139.9139],
+  ["京成八幡",35.7183,139.9186],["京成津田沼",35.6875,140.0181],
 ];
 
 const stationMap = new Map(STATIONS.map(s => [s[0], {lat:s[1], lon:s[2]}]));
@@ -462,11 +568,19 @@ function hashStr(str) {
   for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
   return h;
 }
+// 未登録駅(ユーザーが「未登録駅として使う」を選んだ場合)は駅名のハッシュから疑似配置する
+function coordsFor(name) {
+  if (stationMap.has(name)) return stationMap.get(name);
+  const h = hashStr(name);
+  const dx = ((h % 2000) / 2000 - 0.5) * 0.6;
+  const dy = (((h >> 11) % 2000) / 2000 - 0.5) * 0.6;
+  return { lat: 35.6812 + dy, lon: 139.7671 + dx };
+}
 // 駅間の概算所要時間(分)。直線距離×補正+乗換等の基礎時間+揺らぎ
 function approxTravelMinutes(nameA, nameB) {
-  const a = stationMap.get(nameA), b = stationMap.get(nameB);
-  if (!a || !b) return null;
+  if (!nameA || !nameB) return null;
   if (nameA === nameB) return 0;
+  const a = coordsFor(nameA), b = coordsFor(nameB);
   const km = haversineKm(a, b);
   const jitter = Math.abs(hashStr(nameA + "|" + nameB) % 9) - 4;
   const minutes = km * 2.1 + 12 + jitter;
@@ -474,8 +588,7 @@ function approxTravelMinutes(nameA, nameB) {
 }
 // 概算終電時刻(分, 0:00起点。都心ほど遅く、郊外ほど早い想定)
 function approxLastTrainMinutes(stationName) {
-  const s = stationMap.get(stationName);
-  if (!s) return null;
+  const s = coordsFor(stationName);
   const center = { lat: 35.6812, lon: 139.7671 };
   const km = haversineKm(s, center);
   const t = 1470 - km * 1.5;
@@ -569,20 +682,24 @@ peopleGrid.addEventListener("input", (e) => {
   else if (e.target.classList.contains("p-home")) d.home = e.target.value;
 
   if (e.target.classList.contains("station-input")) {
+    delete e.target.dataset.manual; // 編集したら未登録駅の確認は無効化
     updateSuggestions(e.target);
     clearFieldError(e.target);
   }
 });
 
-// ---- 駅名オートコンプリート ----
+// ---- 駅名オートコンプリート(候補にない場合は「未登録駅として使う」を提示) ----
 function updateSuggestions(input) {
   const wrapper = input.closest(".station-field");
   const ul = wrapper.querySelector(".suggestions");
   const q = input.value.trim();
   if (!q) { ul.style.display = "none"; ul.innerHTML = ""; return; }
   const matches = STATIONS.filter(s => s[0].includes(q)).slice(0, 8);
-  if (matches.length === 0) { ul.style.display = "none"; ul.innerHTML = ""; return; }
-  ul.innerHTML = matches.map(s => `<li data-name="${escapeAttr(s[0])}">${s[0]}</li>`).join("");
+  let html = matches.map(s => `<li data-name="${escapeAttr(s[0])}">${s[0]}</li>`).join("");
+  if (matches.length === 0) {
+    html = `<li class="no-match-option" data-manual="${escapeAttr(q)}">候補が見つかりません。「${q}」を未登録駅として使う(概算配置)</li>`;
+  }
+  ul.innerHTML = html;
   ul.style.display = "block";
 }
 function hideSuggestions(input) {
@@ -590,22 +707,37 @@ function hideSuggestions(input) {
   ul.style.display = "none";
 }
 function clearFieldError(input) {
-  input.classList.remove("invalid");
+  input.classList.remove("invalid", "override");
   const errEl = input.closest(".field").querySelector(".field-error");
   errEl.textContent = "";
+  errEl.classList.remove("note");
 }
 function validateField(input, requireFilled) {
   const val = input.value.trim();
   const errEl = input.closest(".field").querySelector(".field-error");
+  errEl.classList.remove("note");
   if (!val) {
+    input.classList.remove("invalid", "override");
     input.classList.toggle("invalid", !!requireFilled);
     errEl.textContent = requireFilled ? "職場の最寄駅を入力してください" : "";
     return !requireFilled;
   }
-  const valid = stationMap.has(val);
-  input.classList.toggle("invalid", !valid);
-  errEl.textContent = valid ? "" : "候補にない駅名です。候補一覧から選んでください";
-  return valid;
+  if (stationMap.has(val)) {
+    input.classList.remove("invalid", "override");
+    errEl.textContent = "";
+    return true;
+  }
+  if (input.dataset.manual === val) {
+    input.classList.remove("invalid");
+    input.classList.add("override");
+    errEl.textContent = "未登録駅として概算配置で計算します";
+    errEl.classList.add("note");
+    return true;
+  }
+  input.classList.add("invalid");
+  input.classList.remove("override");
+  errEl.textContent = "候補にない駅名です。候補から選ぶか、未登録駅として使うを選んでください";
+  return false;
 }
 
 peopleGrid.addEventListener("focusin", (e) => {
@@ -618,8 +750,10 @@ peopleGrid.addEventListener("mousedown", (e) => {
   if (!li) return;
   e.preventDefault();
   const input = li.closest(".station-field").querySelector(".station-input");
-  input.value = li.dataset.name;
-  input.dispatchEvent(new Event("input", { bubbles: true }));
+  const isManual = li.classList.contains("no-match-option");
+  input.value = isManual ? li.dataset.manual : li.dataset.name;
+  input.dispatchEvent(new Event("input", { bubbles: true })); // clears any stale dataset.manual via the input listener below
+  if (isManual) input.dataset.manual = li.dataset.manual;
   hideSuggestions(input);
   validateField(input, input.classList.contains("p-work"));
 });
@@ -639,10 +773,10 @@ document.addEventListener("click", (e) => {
 
 // ---- モードタブ ----
 const MODES = [
-  { id: "total", label: "合計最短", desc: "全員の移動時間の合計が最も短い駅を優先します。" },
-  { id: "fair", label: "公平重視", desc: "移動時間の差(一番遠い人と近い人の差)が最も小さい駅を優先します。" },
-  { id: "lastTrain", label: "終電安心", desc: "解散予定時刻から逆算し、全員が最も余裕を持って終電に間に合う駅を優先します。" },
-  { id: "fastest", label: "最速集合", desc: "最後の1人が到着するまでの時間が最も短い駅を優先します。" },
+  { id: "total", label: "📊 合計最短", desc: "全員の移動時間の合計が最も短い駅を優先します。" },
+  { id: "fair", label: "⚖️ 公平重視", desc: "移動時間の差(一番遠い人と近い人の差)が最も小さい駅を優先します。" },
+  { id: "lastTrain", label: "🌙 終電安心", desc: "解散予定時刻から逆算し、全員が最も余裕を持って終電に間に合う駅を優先します。" },
+  { id: "fastest", label: "🏃 最速集合", desc: "最後の1人が到着するまでの時間が最も短い駅を優先します。" },
 ];
 let currentMode = "total";
 const modeTabs = document.getElementById("modeTabs");
@@ -684,18 +818,16 @@ function collectPeople() {
     if (!workOk || !homeOk) { hasError = true; return; }
 
     const name = nameInput.value.trim() || `${idx + 1}人目`;
-    people.push({ name, work, home: home || work });
+    people.push({
+      name, work, home: home || work,
+      workUnlisted: !stationMap.has(work),
+      homeUnlisted: !!home && !stationMap.has(home),
+    });
   });
 
-  if (hasError) return { error: "赤枠の駅名を修正してください(候補一覧から選択してください)" };
+  if (hasError) return { error: "赤枠の駅名を修正してください(候補から選ぶか、未登録駅として使うを選択してください)" };
   if (people.length < MIN_PEOPLE) return { error: `最低${MIN_PEOPLE}人分は職場の最寄駅を入力してください` };
   return { people };
-}
-
-function minutesToClock(min) {
-  const h = Math.floor(min / 60) % 24;
-  const m = Math.round(min % 60);
-  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
 }
 
 const formError = document.getElementById("formError");
@@ -713,6 +845,7 @@ document.getElementById("runBtn").addEventListener("click", () => {
   const [bh, bm] = breakupTimeStr.split(":").map(Number);
   const breakupMinutes = bh * 60 + bm;
 
+  const hasUnlisted = people.some(p => p.workUnlisted || p.homeUnlisted);
   const resultsEl = document.getElementById("results");
   const candidates = STATIONS.map(([name]) => name);
   const scored = candidates.map(candidate => {
@@ -720,28 +853,26 @@ document.getElementById("runBtn").addEventListener("click", () => {
       const toCandidate = approxTravelMinutes(p.work, candidate);
       const toHome = approxTravelMinutes(candidate, p.home);
       const lastTrain = approxLastTrainMinutes(p.home);
-      const requiredDeparture = (lastTrain !== null && toHome !== null) ? lastTrain - toHome : null;
-      const margin = (requiredDeparture !== null) ? requiredDeparture - breakupMinutes : null;
+      const requiredDeparture = lastTrain - toHome;
+      const margin = requiredDeparture - breakupMinutes;
       return { ...p, toCandidate, toHome, margin };
     });
-    if (legs.some(l => l.toCandidate === null)) return null;
 
     const times = legs.map(l => l.toCandidate);
     const total = times.reduce((a,b) => a+b, 0);
     const max = Math.max(...times);
     const min = Math.min(...times);
     const spread = max - min;
-    const margins = legs.map(l => l.margin).filter(m => m !== null);
-    const minMargin = margins.length ? Math.min(...margins) : null;
+    const minMargin = Math.min(...legs.map(l => l.margin));
 
     return { candidate, legs, total, max, spread, minMargin };
-  }).filter(Boolean);
+  });
 
   let sorted;
   if (currentMode === "total") sorted = [...scored].sort((a,b) => a.total - b.total || a.max - b.max);
   else if (currentMode === "fair") sorted = [...scored].sort((a,b) => a.spread - b.spread || a.total - b.total);
   else if (currentMode === "fastest") sorted = [...scored].sort((a,b) => a.max - b.max || a.total - b.total);
-  else sorted = [...scored].sort((a,b) => (b.minMargin ?? -9999) - (a.minMargin ?? -9999) || a.total - b.total);
+  else sorted = [...scored].sort((a,b) => b.minMargin - a.minMargin || a.total - b.total);
 
   const top = sorted.slice(0, 6);
   resultsEl.innerHTML = "";
@@ -752,12 +883,13 @@ document.getElementById("runBtn").addEventListener("click", () => {
       currentMode === "total" ? `合計 約${r.total}分` :
       currentMode === "fair" ? `最大差 ${r.spread}分(合計 約${r.total}分)` :
       currentMode === "fastest" ? `最後の到着まで 約${r.max}分` :
-      (r.minMargin !== null ? `最小余裕 ${r.minMargin >= 0 ? "+" : ""}${Math.round(r.minMargin)}分` : "終電データなし");
+      `最小余裕 ${r.minMargin >= 0 ? "+" : ""}${Math.round(r.minMargin)}分`;
 
     const perPersonHtml = r.legs.map(l => {
-      let extra = `${l.name}: 約${l.toCandidate}分`;
+      const mark = (l.workUnlisted || l.homeUnlisted) ? " *" : "";
+      let extra = `${l.name}${mark}: 約${l.toCandidate}分`;
       if (currentMode === "lastTrain") {
-        extra += ` / 帰宅約${l.toHome}分 / 余裕 ${l.margin !== null ? (l.margin >= 0 ? "+" : "") + Math.round(l.margin) + "分" : "―"}`;
+        extra += ` / 帰宅約${l.toHome}分 / 余裕 ${l.margin >= 0 ? "+" : ""}${Math.round(l.margin)}分`;
       }
       return `<div>${extra}</div>`;
     }).join("");
@@ -773,8 +905,11 @@ document.getElementById("runBtn").addEventListener("click", () => {
     resultsEl.appendChild(div);
   });
 
-  if (top.length === 0) {
-    resultsEl.innerHTML = `<p class="empty-hint">候補駅を計算できませんでした。駅名を確認してください。</p>`;
+  if (hasUnlisted) {
+    const note = document.createElement("p");
+    note.className = "result-note";
+    note.textContent = "* 印は未登録駅(候補一覧にない駅)のため、駅名から推定した概算位置で計算しています";
+    resultsEl.appendChild(note);
   }
 });
 </script>
