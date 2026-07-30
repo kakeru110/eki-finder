@@ -229,13 +229,13 @@
     cursor: not-allowed;
     color: var(--muted);
   }
-  .mode-tabs {
+  .mode-tabs, .day-toggle {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px;
     margin-bottom: 6px;
   }
-  .mode-tabs button {
+  .mode-tabs button, .day-toggle button {
     padding: 9px 6px;
     border: 1.5px solid var(--border);
     background: #fff;
@@ -246,17 +246,29 @@
     color: var(--text);
     font-family: inherit;
   }
-  .mode-tabs button.active {
+  .mode-tabs button.active, .day-toggle button.active {
     background: linear-gradient(120deg, var(--accent), var(--accent-2));
     border-color: transparent;
     color: #fff;
     box-shadow: 0 3px 10px rgba(109,40,217,0.28);
   }
+  .day-toggle { margin-bottom: 4px; }
   .mode-desc {
     font-size: 0.76rem;
     color: var(--muted);
     margin: 4px 0 0;
   }
+  .required-mark, .optional-mark {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.6rem;
+    padding: 1px 5px;
+    border-radius: 999px;
+    font-weight: 700;
+    vertical-align: middle;
+  }
+  .required-mark { background: var(--accent-soft); color: var(--accent); }
+  .optional-mark { background: rgba(122,118,144,0.15); color: var(--muted); }
   .inline-row {
     display: flex;
     align-items: center;
@@ -380,6 +392,7 @@
     .station-field input,
     .add-person-btn,
     .mode-tabs button,
+    .day-toggle button,
     .suggestions { background: #1c1729; color: var(--text); }
     .result-item { background: #1c1729; }
   }
@@ -398,6 +411,11 @@
 
   <section class="card">
     <h2>1. 最寄駅を入力 <span class="count-badge" id="peopleCountBadge"></span></h2>
+    <div class="day-toggle" id="dayToggle">
+      <button type="button" data-day="weekday" class="active">🏢 平日(職場から集合)</button>
+      <button type="button" data-day="weekend">🏠 休日(自宅から集合)</button>
+    </div>
+    <p class="mode-desc" id="dayDesc"></p>
     <div class="people-grid" id="peopleGrid"></div>
     <button class="add-person-btn" id="addPersonBtn">＋ 人を追加</button>
   </section>
@@ -595,6 +613,18 @@ function approxLastTrainMinutes(stationName) {
   return Math.max(1380, Math.min(1470, t));
 }
 
+// ---- 出発地(平日=職場 / 休日=自宅) ----
+let departureMode = "weekday"; // "weekday" | "weekend"
+function isFieldRequired(input) {
+  const isWork = input.classList.contains("p-work");
+  return isWork ? departureMode === "weekday" : departureMode === "weekend";
+}
+function fieldLabelHtml(kind) {
+  const required = kind === "work" ? departureMode === "weekday" : departureMode === "weekend";
+  const base = kind === "work" ? "職場の最寄駅" : "自宅の最寄駅";
+  return `${base}<span class="${required ? "required-mark" : "optional-mark"}">${required ? "必須" : "任意"}</span>`;
+}
+
 // ---- 人数の動的管理 ----
 const MIN_PEOPLE = 2;
 const MAX_PEOPLE = 8;
@@ -623,7 +653,7 @@ function renderPeople() {
         </div>
         <div class="p-fields">
           <div class="field">
-            <label>職場の最寄駅</label>
+            <label>${fieldLabelHtml("work")}</label>
             <div class="station-field">
               <input class="station-input p-work" autocomplete="off" placeholder="例: 新宿" value="${escapeAttr(d.work)}">
               <ul class="suggestions"></ul>
@@ -631,7 +661,7 @@ function renderPeople() {
             <div class="field-error"></div>
           </div>
           <div class="field">
-            <label>自宅の最寄駅</label>
+            <label>${fieldLabelHtml("home")}</label>
             <div class="station-field">
               <input class="station-input p-home" autocomplete="off" placeholder="例: 町田" value="${escapeAttr(d.home)}">
               <ul class="suggestions"></ul>
@@ -670,6 +700,25 @@ peopleGrid.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-remove]");
   if (btn) removePerson(Number(btn.dataset.remove));
 });
+
+const dayToggle = document.getElementById("dayToggle");
+const dayDesc = document.getElementById("dayDesc");
+function renderDayToggle() {
+  [...dayToggle.querySelectorAll("button")].forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.day === departureMode);
+  });
+  dayDesc.textContent = departureMode === "weekday"
+    ? "各自の職場の最寄駅から集合する想定です。自宅は帰りの終電判定にのみ使います。"
+    : "各自の自宅の最寄駅から集合する想定です。職場は使いません。";
+}
+dayToggle.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-day]");
+  if (!btn || btn.dataset.day === departureMode) return;
+  departureMode = btn.dataset.day;
+  renderDayToggle();
+  renderPeople();
+});
+renderDayToggle();
 
 // ---- 入力の状態保存 ----
 peopleGrid.addEventListener("input", (e) => {
@@ -715,11 +764,12 @@ function clearFieldError(input) {
 function validateField(input, requireFilled) {
   const val = input.value.trim();
   const errEl = input.closest(".field").querySelector(".field-error");
+  const fieldName = input.classList.contains("p-work") ? "職場" : "自宅";
   errEl.classList.remove("note");
   if (!val) {
     input.classList.remove("invalid", "override");
     input.classList.toggle("invalid", !!requireFilled);
-    errEl.textContent = requireFilled ? "職場の最寄駅を入力してください" : "";
+    errEl.textContent = requireFilled ? `${fieldName}の最寄駅を入力してください` : "";
     return !requireFilled;
   }
   if (stationMap.has(val)) {
@@ -755,14 +805,14 @@ peopleGrid.addEventListener("mousedown", (e) => {
   input.dispatchEvent(new Event("input", { bubbles: true })); // clears any stale dataset.manual via the input listener below
   if (isManual) input.dataset.manual = li.dataset.manual;
   hideSuggestions(input);
-  validateField(input, input.classList.contains("p-work"));
+  validateField(input, isFieldRequired(input));
 });
 peopleGrid.addEventListener("focusout", (e) => {
   if (!e.target.classList.contains("station-input")) return;
   const input = e.target;
   setTimeout(() => {
     hideSuggestions(input);
-    validateField(input, input.classList.contains("p-work"));
+    validateField(input, isFieldRequired(input));
   }, 120);
 });
 document.addEventListener("click", (e) => {
@@ -813,20 +863,25 @@ function collectPeople() {
 
     if (!work && !home) { clearFieldError(workInput); clearFieldError(homeInput); return; }
 
-    const workOk = validateField(workInput, true);
-    const homeOk = validateField(homeInput, false);
+    const workOk = validateField(workInput, isFieldRequired(workInput));
+    const homeOk = validateField(homeInput, isFieldRequired(homeInput));
     if (!workOk || !homeOk) { hasError = true; return; }
 
+    const from = departureMode === "weekday" ? (work || home) : (home || work);
+    const actualHome = home || work;
     const name = nameInput.value.trim() || `${idx + 1}人目`;
     people.push({
-      name, work, home: home || work,
-      workUnlisted: !stationMap.has(work),
-      homeUnlisted: !!home && !stationMap.has(home),
+      name, from, home: actualHome,
+      fromUnlisted: !!from && !stationMap.has(from),
+      homeUnlisted: !!actualHome && !stationMap.has(actualHome),
     });
   });
 
   if (hasError) return { error: "赤枠の駅名を修正してください(候補から選ぶか、未登録駅として使うを選択してください)" };
-  if (people.length < MIN_PEOPLE) return { error: `最低${MIN_PEOPLE}人分は職場の最寄駅を入力してください` };
+  if (people.length < MIN_PEOPLE) {
+    const need = departureMode === "weekday" ? "職場" : "自宅";
+    return { error: `最低${MIN_PEOPLE}人分は${need}の最寄駅を入力してください` };
+  }
   return { people };
 }
 
@@ -845,12 +900,12 @@ document.getElementById("runBtn").addEventListener("click", () => {
   const [bh, bm] = breakupTimeStr.split(":").map(Number);
   const breakupMinutes = bh * 60 + bm;
 
-  const hasUnlisted = people.some(p => p.workUnlisted || p.homeUnlisted);
+  const hasUnlisted = people.some(p => p.fromUnlisted || p.homeUnlisted);
   const resultsEl = document.getElementById("results");
   const candidates = STATIONS.map(([name]) => name);
   const scored = candidates.map(candidate => {
     const legs = people.map(p => {
-      const toCandidate = approxTravelMinutes(p.work, candidate);
+      const toCandidate = approxTravelMinutes(p.from, candidate);
       const toHome = approxTravelMinutes(candidate, p.home);
       const lastTrain = approxLastTrainMinutes(p.home);
       const requiredDeparture = lastTrain - toHome;
@@ -886,7 +941,7 @@ document.getElementById("runBtn").addEventListener("click", () => {
       `最小余裕 ${r.minMargin >= 0 ? "+" : ""}${Math.round(r.minMargin)}分`;
 
     const perPersonHtml = r.legs.map(l => {
-      const mark = (l.workUnlisted || l.homeUnlisted) ? " *" : "";
+      const mark = (l.fromUnlisted || l.homeUnlisted) ? " *" : "";
       let extra = `${l.name}${mark}: 約${l.toCandidate}分`;
       if (currentMode === "lastTrain") {
         extra += ` / 帰宅約${l.toHome}分 / 余裕 ${l.margin >= 0 ? "+" : ""}${Math.round(l.margin)}分`;
