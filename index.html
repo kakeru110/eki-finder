@@ -6,15 +6,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root {
-    --bg: #f5f6f8;
+    --bg: #f1f2f6;
     --card: #ffffff;
-    --accent: #2f6fed;
-    --accent-soft: #eaf1ff;
-    --text: #1c1f26;
+    --accent: #4f46e5;
+    --accent-2: #7c3aed;
+    --accent-soft: #eef0ff;
+    --text: #14171f;
     --muted: #6b7280;
-    --border: #e2e5ea;
-    --good: #1a8a4a;
-    --warn: #c8791a;
+    --border: #e3e5ea;
+    --good: #16a34a;
+    --warn: #b45309;
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
   }
   * { box-sizing: border-box; }
   body {
@@ -22,74 +25,184 @@
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
     background: var(--bg);
     color: var(--text);
-    line-height: 1.5;
+    line-height: 1.45;
+    font-size: 15px;
   }
   header {
-    background: linear-gradient(135deg, #2f6fed, #5b8def);
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
     color: #fff;
-    padding: 28px 20px 22px;
-    text-align: center;
+    padding: 16px 16px 14px;
   }
-  header h1 { margin: 0 0 6px; font-size: 1.5rem; }
-  header p { margin: 0; opacity: 0.9; font-size: 0.9rem; }
-  main {
-    max-width: 900px;
+  header .head-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    max-width: 720px;
     margin: 0 auto;
-    padding: 20px 16px 60px;
+  }
+  header h1 { margin: 0; font-size: 1.15rem; white-space: nowrap; }
+  header p { margin: 2px 0 0; opacity: 0.92; font-size: 0.78rem; max-width: 720px; margin-left: auto; margin-right: auto; }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 14px 12px 50px;
   }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 18px 18px 20px;
-    margin-bottom: 18px;
+    border-radius: 14px;
+    padding: 14px 14px 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 2px rgba(20,23,31,0.04);
   }
   .card h2 {
-    margin: 0 0 12px;
-    font-size: 1.05rem;
+    margin: 0 0 10px;
+    font-size: 0.92rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .card h2 .count-badge {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--muted);
   }
   .people-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 8px;
   }
   .person {
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 12px;
+    padding: 8px 9px 9px;
     background: #fafbfc;
   }
-  .person label {
-    display: block;
-    font-size: 0.78rem;
-    color: var(--muted);
-    margin: 8px 0 3px;
+  .person-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
   }
-  .person label:first-child { margin-top: 0; }
-  .person input {
-    width: 100%;
-    padding: 7px 8px;
+  .person-head .p-name {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-weight: 700;
+    font-size: 0.86rem;
+    padding: 2px 2px;
+    color: var(--text);
+    min-width: 0;
+  }
+  .person-head .p-name::placeholder { color: #9aa0ab; font-weight: 600; }
+  .remove-btn {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
     border: 1px solid var(--border);
+    background: #fff;
+    color: var(--muted);
+    font-size: 0.75rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .remove-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .p-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .field label {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin: 0 0 2px 1px;
+  }
+  .station-field { position: relative; }
+  .station-field input {
+    width: 100%;
+    padding: 6px 7px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 0.85rem;
+    background: #fff;
+  }
+  .station-field input.invalid {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+  }
+  .field-error {
+    font-size: 0.66rem;
+    color: var(--danger);
+    margin-top: 2px;
+    min-height: 0;
+  }
+  .field-error:empty { display: none; }
+  .suggestions {
+    display: none;
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(20,23,31,0.12);
+    max-height: 180px;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 4px;
+  }
+  .suggestions li {
+    padding: 6px 8px;
     border-radius: 6px;
-    font-size: 0.92rem;
+    font-size: 0.83rem;
+    cursor: pointer;
+  }
+  .suggestions li:hover,
+  .suggestions li.active {
+    background: var(--accent-soft);
+  }
+  .add-person-btn {
+    margin-top: 8px;
+    width: 100%;
+    padding: 8px;
+    border: 1px dashed #c7cbd6;
+    border-radius: 9px;
+    background: #fff;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .add-person-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    color: var(--muted);
   }
   .mode-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
     margin-bottom: 6px;
   }
   .mode-tabs button {
-    flex: 1 1 140px;
-    padding: 10px 8px;
+    padding: 9px 6px;
     border: 1px solid var(--border);
     background: #fff;
-    border-radius: 8px;
+    border-radius: 9px;
     cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 600;
+    font-size: 0.82rem;
+    font-weight: 700;
     color: var(--text);
-    transition: all .15s;
   }
   .mode-tabs button.active {
     background: var(--accent);
@@ -97,51 +210,59 @@
     color: #fff;
   }
   .mode-desc {
-    font-size: 0.82rem;
+    font-size: 0.76rem;
     color: var(--muted);
     margin: 4px 0 0;
   }
   .inline-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 12px;
-    font-size: 0.85rem;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.8rem;
   }
   .inline-row input[type="time"] {
-    padding: 6px 8px;
+    padding: 5px 7px;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 7px;
+    font-size: 0.82rem;
   }
   .run-btn {
     display: block;
     width: 100%;
-    padding: 13px;
+    padding: 12px;
     border: none;
     border-radius: 10px;
     background: var(--accent);
     color: #fff;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
-    margin-top: 6px;
+    margin-top: 8px;
   }
   .run-btn:active { opacity: 0.85; }
-  .notice {
+  .form-error {
     font-size: 0.78rem;
+    color: var(--danger);
+    margin-top: 6px;
+    display: none;
+  }
+  .form-error.show { display: block; }
+  .notice {
+    font-size: 0.72rem;
     color: var(--warn);
-    background: #fff6e8;
+    background: #fff8ec;
     border: 1px solid #f1dcb0;
     border-radius: 8px;
-    padding: 8px 10px;
-    margin-top: 10px;
+    padding: 7px 9px;
+    margin-top: 8px;
   }
-  #results { margin-top: 4px; }
+  #results { margin-top: 2px; }
   .result-item {
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
     background: #fff;
   }
   .result-item.rank-1 {
@@ -156,59 +277,62 @@
     gap: 6px;
   }
   .result-head .station-name {
-    font-size: 1.05rem;
+    font-size: 0.98rem;
     font-weight: 700;
   }
   .result-head .badge {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     background: var(--accent);
     color: #fff;
-    padding: 2px 8px;
+    padding: 2px 7px;
     border-radius: 999px;
   }
   .result-head .score {
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     color: var(--muted);
   }
   .per-person {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 6px 12px;
-    margin-top: 8px;
-    font-size: 0.82rem;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 4px 10px;
+    margin-top: 6px;
+    font-size: 0.76rem;
     color: var(--text);
   }
   .per-person .approx { color: var(--muted); }
   .empty-hint {
     color: var(--muted);
-    font-size: 0.88rem;
+    font-size: 0.84rem;
     text-align: center;
-    padding: 20px 0;
+    padding: 16px 0;
   }
   footer {
     text-align: center;
     color: var(--muted);
-    font-size: 0.75rem;
-    padding: 10px 16px 30px;
+    font-size: 0.7rem;
+    padding: 8px 16px 28px;
   }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>🚉 合流駅ファインダー</h1>
-  <p>4人分の職場・自宅最寄駅を入力して、公平に集まれる駅を提案します</p>
+  <div class="head-row">
+    <h1>🚉 合流駅ファインダー</h1>
+  </div>
+  <p>何人でも(2〜8人)の職場・自宅最寄駅を入力して、公平に集まれる駅を提案します</p>
 </header>
 
 <main>
 
   <section class="card">
-    <h2>1. 4人の最寄駅を入力</h2>
+    <h2>1. 最寄駅を入力 <span class="count-badge" id="peopleCountBadge"></span></h2>
     <div class="people-grid" id="peopleGrid"></div>
+    <button class="add-person-btn" id="addPersonBtn">＋ 人を追加</button>
   </section>
 
   <section class="card">
-    <h2>2. 重視するモードを選択</h2>
+    <h2>2. 重視するモード</h2>
     <div class="mode-tabs" id="modeTabs"></div>
     <p class="mode-desc" id="modeDesc"></p>
     <div class="inline-row" id="lastTrainRow" style="display:none;">
@@ -216,9 +340,9 @@
       <input type="time" id="breakupTime" value="21:30">
     </div>
     <button class="run-btn" id="runBtn">合流駅を探す</button>
+    <p class="form-error" id="formError"></p>
     <p class="notice">
-      ⚠️ 現在は駅すぱあと/ジョルダン等の実際の乗換案内APIに未接続のため、駅間の所要時間・終電は
-      駅の位置関係からの<strong>概算値</strong>で計算しています。実際の乗換時間・終電時刻とは異なります。
+      ⚠️ 実際の乗換案内APIに未接続のため、所要時間・終電は駅の位置関係からの<strong>概算値</strong>です。実際の乗換時間・終電時刻とは異なります。
     </p>
   </section>
 
@@ -232,8 +356,6 @@
 <footer>
   合流駅ファインダー — 概算版(実データ未接続) / <span id="candidateCount"></span>駅を候補として計算
 </footer>
-
-<datalist id="stationList"></datalist>
 
 <script>
 // ---- 候補駅リスト(概算緯度経度つき) ----
@@ -263,36 +385,69 @@ const STATIONS = [
   ["成田",35.7767,140.3186],["津田沼",35.6837,140.0219],["市川",35.7217,139.9307],
   ["自由が丘",35.6072,139.6688],["二子玉川",35.6113,139.6270],["溝の口",35.6013,139.6091],
   ["羽田空港",35.5494,139.7798],["六本木",35.6627,139.7315],["表参道",35.6654,139.7124],
+  ["北千住",35.7488,139.8047],["綾瀬",35.7669,139.8267],["北綾瀬",35.7735,139.8302],
+  ["金町",35.7666,139.8697],["亀有",35.7639,139.8467],["西新井",35.7783,139.7888],
+  ["竹ノ塚",35.7889,139.8064],["東武練馬",35.7677,139.6592],["成増",35.7735,139.6294],
+  ["和光市",35.7847,139.6161],["志木",35.8267,139.5772],["朝霞台",35.8067,139.5978],
+  ["川越",35.9251,139.4858],["所沢",35.7994,139.4694],["東村山",35.7561,139.4696],
+  ["田無",35.7261,139.5386],["保谷",35.7364,139.5717],["石神井公園",35.7414,139.5975],
+  ["大泉学園",35.7481,139.5875],["ひばりヶ丘",35.7456,139.5386],["清瀬",35.7847,139.5233],
+  ["東久留米",35.7614,139.5286],["花小金井",35.7217,139.5031],["小平",35.7286,139.4839],
+  ["国立",35.6842,139.4414],["日野",35.6742,139.3956],["豊田",35.6494,139.3742],
+  ["高尾",35.6408,139.2789],["拝島",35.7275,139.3383],["昭島",35.7047,139.3547],
+  ["福生",35.7378,139.3269],["羽村",35.7708,139.3117],["青梅",35.7878,139.2769],
+  ["明大前",35.6742,139.6519],["下高井戸",35.6669,139.6461],["桜上水",35.6706,139.6403],
+  ["千歳烏山",35.6608,139.6106],["仙川",35.6614,139.5928],["つつじヶ丘",35.6606,139.5697],
+  ["柴崎",35.6608,139.5589],["国領",35.6597,139.5486],["布田",35.6572,139.5433],
+  ["京王多摩川",35.6428,139.5308],["聖蹟桜ヶ丘",35.6242,139.4783],["高幡不動",35.6486,139.4200],
+  ["南大沢",35.6083,139.4356],["橋本",35.5936,139.3436],["京王八王子",35.6558,139.3350],
+  ["笹塚",35.6739,139.6683],["経堂",35.6483,139.6394],["成城学園前",35.6425,139.5978],
+  ["狛江",35.6367,139.5764],["登戸",35.6183,139.5511],["向ヶ丘遊園",35.6106,139.5464],
+  ["新百合ヶ丘",35.6072,139.5069],["相模大野",35.5514,139.4225],["海老名",35.4514,139.3919],
+  ["本厚木",35.4433,139.3639],["秦野",35.3742,139.2192],["小田原",35.2564,139.1544],
+  ["代々木上原",35.6697,139.6811],["下北沢",35.6614,139.6683],["世田谷代田",35.6600,139.6597],
+  ["梅ヶ丘",35.6544,139.6519],["田園調布",35.6006,139.6683],["多摩川",35.5972,139.6689],
+  ["日吉",35.5556,139.6469],["綱島",35.5322,139.6303],["菊名",35.5083,139.6294],
+  ["たまプラーザ",35.5747,139.5364],["あざみ野",35.5658,139.5289],["中央林間",35.5219,139.4467],
+  ["長津田",35.5292,139.4894],["青葉台",35.5544,139.5100],["学芸大学",35.6317,139.6867],
+  ["都立大学",35.6178,139.6822],["中目黒",35.6439,139.6989],["三軒茶屋",35.6439,139.6689],
+  ["用賀",35.6303,139.6353],["京急蒲田",35.5619,139.7231],["京急川崎",35.5308,139.6989],
+  ["上大岡",35.4053,139.5972],["金沢文庫",35.3536,139.6317],["金沢八景",35.3378,139.6222],
+  ["横須賀中央",35.2789,139.6669],["三崎口",35.1481,139.6272],["逗子・葉山",35.2953,139.5794],
+  ["二俣川",35.4778,139.5250],["大和",35.4917,139.4661],["押上",35.7103,139.8133],
+  ["曳舟",35.7183,139.8203],["門前仲町",35.6725,139.7947],["木場",35.6706,139.8028],
+  ["東陽町",35.6714,139.8175],["西葛西",35.6608,139.8656],["葛西",35.6600,139.8797],
+  ["南砂町",35.6675,139.8319],["新木場",35.6467,139.8267],["豊洲",35.6553,139.7967],
+  ["月島",35.6650,139.7828],["築地",35.6683,139.7706],["銀座",35.6717,139.7639],
+  ["麻布十番",35.6558,139.7361],["白金台",35.6383,139.7292],["代官山",35.6497,139.7033],
+  ["早稲田",35.7089,139.7194],["護国寺",35.7181,139.7297],["千川",35.7361,139.6947],
+  ["要町",35.7358,139.6844],["氷川台",35.7514,139.6647],["小竹向原",35.7422,139.6642],
+  ["平和台",35.7550,139.6511],["南浦和",35.8664,139.6522],["西川口",35.8064,139.7128],
+  ["蕨",35.8267,139.6942],["与野",35.8869,139.6244],["上尾",35.9758,139.5964],
+  ["桶川",36.0011,139.5919],["北本",36.0517,139.5314],["鴻巣",36.0658,139.5303],
+  ["熊谷",36.1467,139.3886],["春日部",35.9761,139.7522],["越谷",35.8908,139.7906],
+  ["草加",35.8256,139.8047],["せんげん台",35.9203,139.7856],["久喜",36.0578,139.6656],
+  ["辻堂",35.3311,139.4489],["茅ヶ崎",35.3308,139.4067],["平塚",35.3236,139.3494],
+  ["相模原",35.5717,139.3733],["舞浜",35.6350,139.8853],["新浦安",35.6497,139.9022],
+  ["幕張",35.6522,140.0347],["幕張本郷",35.6636,140.0128],["稲毛",35.6167,140.1136],
+  ["都賀",35.6167,140.1494],["四街道",35.6203,140.1758],["佐倉",35.7233,140.2211],
+  ["八千代台",35.7028,140.0975],["勝田台",35.7017,140.1444],["大和田",35.7169,140.0794],
+  ["成田空港",35.7647,140.3864],["大井町",35.6058,139.7319],["大森",35.5883,139.7256],
+  ["鶴見",35.5122,139.6767],["保土ヶ谷",35.4442,139.5872],["東神奈川",35.4694,139.6300],
+  ["岩本町",35.6969,139.7742],["馬喰横山",35.6947,139.7825],["森下",35.6858,139.7961],
+  ["住吉",35.6975,139.8106],["西大島",35.6839,139.8189],["大島",35.6794,139.8267],
+  ["東大島",35.6822,139.8364],["船堀",35.6772,139.8672],["一之江",35.6708,139.8794],
+  ["瑞江",35.6689,139.8933],["篠崎",35.6797,139.8994],["本八幡",35.7211,139.9231],
+  ["都庁前",35.6897,139.6917],["清澄白河",35.6822,139.7969],["勝どき",35.6578,139.7783],
+  ["汐留",35.6608,139.7597],["大門",35.6572,139.7561],["赤羽橋",35.6558,139.7439],
+  ["青山一丁目",35.6725,139.7256],["代々木",35.6836,139.7022],["東新宿",35.6939,139.7042],
+  ["若松河田",35.6961,139.7181],["牛込柳町",35.6994,139.7256],["牛込神楽坂",35.7008,139.7358],
+  ["春日",35.7061,139.7522],["本郷三丁目",35.7075,139.7594],["上野御徒町",35.7075,139.7742],
+  ["新御徒町",35.7061,139.7794],["蔵前",35.7047,139.7889],
 ];
 
 const stationMap = new Map(STATIONS.map(s => [s[0], {lat:s[1], lon:s[2]}]));
 document.getElementById("candidateCount").textContent = STATIONS.length;
-
-const dl = document.getElementById("stationList");
-STATIONS.forEach(s => {
-  const opt = document.createElement("option");
-  opt.value = s[0];
-  dl.appendChild(opt);
-});
-
-// ---- 未知の駅名 → 疑似座標(ハッシュベース) ----
-function hashStr(str) {
-  let h = 5381;
-  for (let i = 0; i < str.length; i++) {
-    h = ((h << 5) + h + str.charCodeAt(i)) | 0;
-  }
-  return h;
-}
-function coordsFor(name) {
-  const trimmed = (name || "").trim();
-  if (!trimmed) return null;
-  if (stationMap.has(trimmed)) return { ...stationMap.get(trimmed), approx: false };
-  // 未登録駅名はハッシュから東京駅周辺に疑似配置(概算モード)
-  const h = hashStr(trimmed);
-  const dx = ((h % 2000) / 2000 - 0.5) * 0.6;
-  const dy = (((h >> 11) % 2000) / 2000 - 0.5) * 0.6;
-  return { lat: 35.6812 + dy, lon: 139.7671 + dx, approx: true };
-}
 
 function haversineKm(a, b) {
   const R = 6371;
@@ -302,58 +457,192 @@ function haversineKm(a, b) {
   const h = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;
   return R * 2 * Math.asin(Math.sqrt(h));
 }
-
-// 駅間の概算所要時間(分)。直線距離×補正+乗換等の基礎時間+駅名ハッシュの揺らぎ
+function hashStr(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+  return h;
+}
+// 駅間の概算所要時間(分)。直線距離×補正+乗換等の基礎時間+揺らぎ
 function approxTravelMinutes(nameA, nameB) {
-  if (!nameA || !nameB) return null;
-  const a = coordsFor(nameA), b = coordsFor(nameB);
+  const a = stationMap.get(nameA), b = stationMap.get(nameB);
   if (!a || !b) return null;
-  if (nameA.trim() === nameB.trim()) return 0;
+  if (nameA === nameB) return 0;
   const km = haversineKm(a, b);
-  const jitter = Math.abs(hashStr(nameA.trim() + "|" + nameB.trim()) % 9) - 4; // -4〜+4分の揺らぎ
-  const minutes = km * 2.1 + 12 + jitter; // 表定速度+待ち時間+乗換の概算
+  const jitter = Math.abs(hashStr(nameA + "|" + nameB) % 9) - 4;
+  const minutes = km * 2.1 + 12 + jitter;
   return Math.max(5, Math.round(minutes));
 }
-
 // 概算終電時刻(分, 0:00起点。都心ほど遅く、郊外ほど早い想定)
 function approxLastTrainMinutes(stationName) {
-  const s = coordsFor(stationName);
+  const s = stationMap.get(stationName);
   if (!s) return null;
   const center = { lat: 35.6812, lon: 139.7671 };
   const km = haversineKm(s, center);
-  const t = 1470 - km * 1.5; // 東京駅=0:30(1470分)起点、遠いほど早まる
-  return Math.max(1380, Math.min(1470, t)); // 23:00〜0:30の範囲でクリップ
+  const t = 1470 - km * 1.5;
+  return Math.max(1380, Math.min(1470, t));
 }
 
-function minutesToClock(min) {
-  const h = Math.floor(min / 60) % 24;
-  const m = Math.round(min % 60);
-  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+// ---- 人数の動的管理 ----
+const MIN_PEOPLE = 2;
+const MAX_PEOPLE = 8;
+let nextId = 1;
+let peopleIds = [];
+const peopleData = new Map(); // id -> {name, work, home}
+
+function ensureData(id) {
+  if (!peopleData.has(id)) peopleData.set(id, { name: "", work: "", home: "" });
+  return peopleData.get(id);
 }
 
-// ---- 入力フォーム構築 ----
 const peopleGrid = document.getElementById("peopleGrid");
-const defaultNames = ["Aさん", "Bさん", "Cさん", "Dさん"];
-defaultNames.forEach((defName, i) => {
-  const div = document.createElement("div");
-  div.className = "person";
-  div.innerHTML = `
-    <label>名前(任意)</label>
-    <input type="text" id="name${i}" placeholder="${defName}">
-    <label>職場の最寄駅</label>
-    <input type="text" id="work${i}" list="stationList" placeholder="例: 新宿">
-    <label>自宅の最寄駅</label>
-    <input type="text" id="home${i}" list="stationList" placeholder="例: 町田">
-  `;
-  peopleGrid.appendChild(div);
+const addPersonBtn = document.getElementById("addPersonBtn");
+const peopleCountBadge = document.getElementById("peopleCountBadge");
+
+function renderPeople() {
+  peopleGrid.innerHTML = peopleIds.map((id, idx) => {
+    const d = ensureData(id);
+    const canRemove = peopleIds.length > MIN_PEOPLE;
+    return `
+      <div class="person" data-id="${id}">
+        <div class="person-head">
+          <input class="p-name" placeholder="${idx + 1}人目の名前(任意)" value="${escapeAttr(d.name)}">
+          <button class="remove-btn" data-remove="${id}" ${canRemove ? "" : "disabled"} title="この人を削除">✕</button>
+        </div>
+        <div class="p-fields">
+          <div class="field">
+            <label>職場の最寄駅</label>
+            <div class="station-field">
+              <input class="station-input p-work" autocomplete="off" placeholder="例: 新宿" value="${escapeAttr(d.work)}">
+              <ul class="suggestions"></ul>
+            </div>
+            <div class="field-error"></div>
+          </div>
+          <div class="field">
+            <label>自宅の最寄駅</label>
+            <div class="station-field">
+              <input class="station-input p-home" autocomplete="off" placeholder="例: 町田" value="${escapeAttr(d.home)}">
+              <ul class="suggestions"></ul>
+            </div>
+            <div class="field-error"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+  addPersonBtn.disabled = peopleIds.length >= MAX_PEOPLE;
+  peopleCountBadge.textContent = `${peopleIds.length}人`;
+}
+
+function escapeAttr(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
+function addPerson() {
+  if (peopleIds.length >= MAX_PEOPLE) return;
+  peopleIds.push(nextId++);
+  renderPeople();
+}
+function removePerson(id) {
+  if (peopleIds.length <= MIN_PEOPLE) return;
+  peopleIds = peopleIds.filter(x => x !== id);
+  peopleData.delete(id);
+  renderPeople();
+}
+
+for (let i = 0; i < 3; i++) { peopleIds.push(nextId++); }
+renderPeople();
+
+addPersonBtn.addEventListener("click", addPerson);
+peopleGrid.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-remove]");
+  if (btn) removePerson(Number(btn.dataset.remove));
+});
+
+// ---- 入力の状態保存 ----
+peopleGrid.addEventListener("input", (e) => {
+  const card = e.target.closest(".person");
+  if (!card) return;
+  const id = Number(card.dataset.id);
+  const d = ensureData(id);
+  if (e.target.classList.contains("p-name")) d.name = e.target.value;
+  else if (e.target.classList.contains("p-work")) d.work = e.target.value;
+  else if (e.target.classList.contains("p-home")) d.home = e.target.value;
+
+  if (e.target.classList.contains("station-input")) {
+    updateSuggestions(e.target);
+    clearFieldError(e.target);
+  }
+});
+
+// ---- 駅名オートコンプリート ----
+function updateSuggestions(input) {
+  const wrapper = input.closest(".station-field");
+  const ul = wrapper.querySelector(".suggestions");
+  const q = input.value.trim();
+  if (!q) { ul.style.display = "none"; ul.innerHTML = ""; return; }
+  const matches = STATIONS.filter(s => s[0].includes(q)).slice(0, 8);
+  if (matches.length === 0) { ul.style.display = "none"; ul.innerHTML = ""; return; }
+  ul.innerHTML = matches.map(s => `<li data-name="${escapeAttr(s[0])}">${s[0]}</li>`).join("");
+  ul.style.display = "block";
+}
+function hideSuggestions(input) {
+  const ul = input.closest(".station-field").querySelector(".suggestions");
+  ul.style.display = "none";
+}
+function clearFieldError(input) {
+  input.classList.remove("invalid");
+  const errEl = input.closest(".field").querySelector(".field-error");
+  errEl.textContent = "";
+}
+function validateField(input, requireFilled) {
+  const val = input.value.trim();
+  const errEl = input.closest(".field").querySelector(".field-error");
+  if (!val) {
+    input.classList.toggle("invalid", !!requireFilled);
+    errEl.textContent = requireFilled ? "職場の最寄駅を入力してください" : "";
+    return !requireFilled;
+  }
+  const valid = stationMap.has(val);
+  input.classList.toggle("invalid", !valid);
+  errEl.textContent = valid ? "" : "候補にない駅名です。候補一覧から選んでください";
+  return valid;
+}
+
+peopleGrid.addEventListener("focusin", (e) => {
+  if (e.target.classList.contains("station-input") && e.target.value.trim()) {
+    updateSuggestions(e.target);
+  }
+});
+peopleGrid.addEventListener("mousedown", (e) => {
+  const li = e.target.closest(".suggestions li");
+  if (!li) return;
+  e.preventDefault();
+  const input = li.closest(".station-field").querySelector(".station-input");
+  input.value = li.dataset.name;
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  hideSuggestions(input);
+  validateField(input, input.classList.contains("p-work"));
+});
+peopleGrid.addEventListener("focusout", (e) => {
+  if (!e.target.classList.contains("station-input")) return;
+  const input = e.target;
+  setTimeout(() => {
+    hideSuggestions(input);
+    validateField(input, input.classList.contains("p-work"));
+  }, 120);
+});
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".station-field")) {
+    document.querySelectorAll(".suggestions").forEach(ul => ul.style.display = "none");
+  }
 });
 
 // ---- モードタブ ----
 const MODES = [
-  { id: "total", label: "合計最短", desc: "4人の移動時間の合計が最も短い駅を優先します。" },
+  { id: "total", label: "合計最短", desc: "全員の移動時間の合計が最も短い駅を優先します。" },
   { id: "fair", label: "公平重視", desc: "移動時間の差(一番遠い人と近い人の差)が最も小さい駅を優先します。" },
   { id: "lastTrain", label: "終電安心", desc: "解散予定時刻から逆算し、全員が最も余裕を持って終電に間に合う駅を優先します。" },
-  { id: "fastest", label: "最速集合", desc: "最後の1人が到着するまでの時間(一番時間がかかる人の移動時間)が最も短い駅を優先します。" },
+  { id: "fastest", label: "最速集合", desc: "最後の1人が到着するまでの時間が最も短い駅を優先します。" },
 ];
 let currentMode = "total";
 const modeTabs = document.getElementById("modeTabs");
@@ -366,10 +655,7 @@ function renderModeTabs() {
     const btn = document.createElement("button");
     btn.textContent = m.label;
     if (m.id === currentMode) btn.classList.add("active");
-    btn.addEventListener("click", () => {
-      currentMode = m.id;
-      renderModeTabs();
-    });
+    btn.addEventListener("click", () => { currentMode = m.id; renderModeTabs(); });
     modeTabs.appendChild(btn);
   });
   const active = MODES.find(m => m.id === currentMode);
@@ -378,26 +664,56 @@ function renderModeTabs() {
 }
 renderModeTabs();
 
-// ---- 計算 ----
-document.getElementById("runBtn").addEventListener("click", () => {
+// ---- 入力の収集とバリデーション ----
+function collectPeople() {
+  const cards = [...peopleGrid.querySelectorAll(".person")];
   const people = [];
-  for (let i = 0; i < 4; i++) {
-    const name = document.getElementById(`name${i}`).value.trim() || defaultNames[i];
-    const work = document.getElementById(`work${i}`).value.trim();
-    const home = document.getElementById(`home${i}`).value.trim();
-    if (!work) continue;
+  let hasError = false;
+
+  cards.forEach((card, idx) => {
+    const nameInput = card.querySelector(".p-name");
+    const workInput = card.querySelector(".p-work");
+    const homeInput = card.querySelector(".p-home");
+    const work = workInput.value.trim();
+    const home = homeInput.value.trim();
+
+    if (!work && !home) { clearFieldError(workInput); clearFieldError(homeInput); return; }
+
+    const workOk = validateField(workInput, true);
+    const homeOk = validateField(homeInput, false);
+    if (!workOk || !homeOk) { hasError = true; return; }
+
+    const name = nameInput.value.trim() || `${idx + 1}人目`;
     people.push({ name, work, home: home || work });
-  }
-  const resultsEl = document.getElementById("results");
-  if (people.length < 2) {
-    resultsEl.innerHTML = `<p class="empty-hint">最低2人分の「職場の最寄駅」を入力してください</p>`;
+  });
+
+  if (hasError) return { error: "赤枠の駅名を修正してください(候補一覧から選択してください)" };
+  if (people.length < MIN_PEOPLE) return { error: `最低${MIN_PEOPLE}人分は職場の最寄駅を入力してください` };
+  return { people };
+}
+
+function minutesToClock(min) {
+  const h = Math.floor(min / 60) % 24;
+  const m = Math.round(min % 60);
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+}
+
+const formError = document.getElementById("formError");
+
+document.getElementById("runBtn").addEventListener("click", () => {
+  const { people, error } = collectPeople();
+  if (error) {
+    formError.textContent = error;
+    formError.classList.add("show");
     return;
   }
+  formError.classList.remove("show");
 
   const breakupTimeStr = document.getElementById("breakupTime").value || "21:30";
   const [bh, bm] = breakupTimeStr.split(":").map(Number);
   const breakupMinutes = bh * 60 + bm;
 
+  const resultsEl = document.getElementById("results");
   const candidates = STATIONS.map(([name]) => name);
   const scored = candidates.map(candidate => {
     const legs = people.map(p => {
@@ -422,15 +738,10 @@ document.getElementById("runBtn").addEventListener("click", () => {
   }).filter(Boolean);
 
   let sorted;
-  if (currentMode === "total") {
-    sorted = [...scored].sort((a,b) => a.total - b.total || a.max - b.max);
-  } else if (currentMode === "fair") {
-    sorted = [...scored].sort((a,b) => a.spread - b.spread || a.total - b.total);
-  } else if (currentMode === "fastest") {
-    sorted = [...scored].sort((a,b) => a.max - b.max || a.total - b.total);
-  } else { // lastTrain
-    sorted = [...scored].sort((a,b) => (b.minMargin ?? -9999) - (a.minMargin ?? -9999) || a.total - b.total);
-  }
+  if (currentMode === "total") sorted = [...scored].sort((a,b) => a.total - b.total || a.max - b.max);
+  else if (currentMode === "fair") sorted = [...scored].sort((a,b) => a.spread - b.spread || a.total - b.total);
+  else if (currentMode === "fastest") sorted = [...scored].sort((a,b) => a.max - b.max || a.total - b.total);
+  else sorted = [...scored].sort((a,b) => (b.minMargin ?? -9999) - (a.minMargin ?? -9999) || a.total - b.total);
 
   const top = sorted.slice(0, 6);
   resultsEl.innerHTML = "";
@@ -444,12 +755,11 @@ document.getElementById("runBtn").addEventListener("click", () => {
       (r.minMargin !== null ? `最小余裕 ${r.minMargin >= 0 ? "+" : ""}${Math.round(r.minMargin)}分` : "終電データなし");
 
     const perPersonHtml = r.legs.map(l => {
-      const approxFlag = (coordsFor(l.work)?.approx || coordsFor(l.home)?.approx) ? ' <span class="approx">(未登録駅・推定)</span>' : "";
       let extra = `${l.name}: 約${l.toCandidate}分`;
       if (currentMode === "lastTrain") {
         extra += ` / 帰宅約${l.toHome}分 / 余裕 ${l.margin !== null ? (l.margin >= 0 ? "+" : "") + Math.round(l.margin) + "分" : "―"}`;
       }
-      return `<div>${extra}${approxFlag}</div>`;
+      return `<div>${extra}</div>`;
     }).join("");
 
     div.innerHTML = `
