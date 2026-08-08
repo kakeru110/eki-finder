@@ -140,6 +140,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 6px;
   }
+  .p-fields.single { grid-template-columns: 1fr; }
   .field label {
     display: block;
     font-size: 0.68rem;
@@ -686,7 +687,8 @@ function renderPeople() {
           <input class="p-name" placeholder="${idx + 1}人目の名前(任意)" value="${escapeAttr(d.name)}">
           <button class="remove-btn" data-remove="${id}" ${canRemove ? "" : "disabled"} title="この人を削除">✕</button>
         </div>
-        <div class="p-fields">
+        <div class="p-fields${departureMode === "homeOnly" ? " single" : ""}">
+          ${departureMode === "workHome" ? `
           <div class="field">
             <label>${fieldLabelHtml("work")}</label>
             <div class="station-field">
@@ -694,7 +696,7 @@ function renderPeople() {
               <ul class="suggestions"></ul>
             </div>
             <div class="field-error"></div>
-          </div>
+          </div>` : ""}
           <div class="field">
             <label>${fieldLabelHtml("home")}</label>
             <div class="station-field">
@@ -900,14 +902,14 @@ function collectPeople() {
 
   cards.forEach((card, idx) => {
     const nameInput = card.querySelector(".p-name");
-    const workInput = card.querySelector(".p-work");
+    const workInput = card.querySelector(".p-work"); // 自宅だけモードでは非表示・DOM上に存在しない
     const homeInput = card.querySelector(".p-home");
-    const work = workInput.value.trim();
+    const work = workInput ? workInput.value.trim() : "";
     const home = homeInput.value.trim();
 
-    if (!work && !home) { clearFieldError(workInput); clearFieldError(homeInput); return; }
+    if (!work && !home) { if (workInput) clearFieldError(workInput); clearFieldError(homeInput); return; }
 
-    const workOk = validateField(workInput, isFieldRequired(workInput));
+    const workOk = workInput ? validateField(workInput, isFieldRequired(workInput)) : true;
     const homeOk = validateField(homeInput, isFieldRequired(homeInput));
     if (!workOk || !homeOk) { hasError = true; return; }
 
