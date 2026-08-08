@@ -9,14 +9,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f6f4fb;
+    --bg: #eef8f9;
     --card: #ffffff;
-    --accent: #6d28d9;
-    --accent-2: #db2777;
-    --accent-soft: #f1ebfd;
-    --text: #201a2e;
-    --muted: #7a7690;
-    --border: #eae6f5;
+    --accent: #0284c7;
+    --accent-2: #0d9488;
+    --accent-soft: #e0f2fe;
+    --text: #0f2a33;
+    --muted: #5b7d87;
+    --border: #d6e9ec;
     --good: #16a34a;
     --warn: #b45309;
     --warn-soft: #fff7ec;
@@ -35,7 +35,7 @@
   header {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, #6d28d9, #a21caf 55%, #db2777);
+    background: linear-gradient(135deg, #0284c7, #06b6d4 55%, #0d9488);
     color: #fff;
     padding: 18px 16px 16px;
   }
@@ -71,7 +71,7 @@
     border-radius: 16px;
     padding: 14px 14px 16px;
     margin-bottom: 12px;
-    box-shadow: 0 2px 10px rgba(109,40,217,0.05);
+    box-shadow: 0 2px 10px rgba(2,132,199,0.06);
   }
   .card h2 {
     margin: 0 0 10px;
@@ -99,7 +99,7 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 8px 9px 9px;
-    background: #fbfaff;
+    background: #f2fbfc;
   }
   .person-head {
     display: flex;
@@ -118,7 +118,7 @@
     min-width: 0;
     font-family: inherit;
   }
-  .person-head .p-name::placeholder { color: #a79fc2; font-weight: 600; }
+  .person-head .p-name::placeholder { color: #7fa9b0; font-weight: 600; }
   .remove-btn {
     flex-shrink: 0;
     width: 22px;
@@ -186,7 +186,7 @@
     background: #fff;
     border: 1px solid var(--border);
     border-radius: 10px;
-    box-shadow: 0 8px 22px rgba(32,26,46,0.14);
+    box-shadow: 0 8px 22px rgba(15,42,51,0.14);
     max-height: 200px;
     overflow-y: auto;
     list-style: none;
@@ -215,7 +215,7 @@
     margin-top: 8px;
     width: 100%;
     padding: 8px;
-    border: 1.5px dashed #cabbec;
+    border: 1.5px dashed #9fd4da;
     border-radius: 10px;
     background: #fff;
     color: var(--accent);
@@ -250,7 +250,7 @@
     background: linear-gradient(120deg, var(--accent), var(--accent-2));
     border-color: transparent;
     color: #fff;
-    box-shadow: 0 3px 10px rgba(109,40,217,0.28);
+    box-shadow: 0 3px 10px rgba(2,132,199,0.28);
   }
   .day-toggle { margin-bottom: 4px; }
   .mode-desc {
@@ -296,7 +296,7 @@
     cursor: pointer;
     margin-top: 10px;
     font-family: inherit;
-    box-shadow: 0 4px 14px rgba(109,40,217,0.3);
+    box-shadow: 0 4px 14px rgba(2,132,199,0.32);
   }
   .run-btn:active { opacity: 0.88; transform: translateY(1px); }
   .form-error {
@@ -325,7 +325,7 @@
   }
   .result-item.rank-1 {
     border-color: var(--accent);
-    background: linear-gradient(135deg, var(--accent-soft), #fdf2f8);
+    background: linear-gradient(135deg, var(--accent-soft), #e6fffa);
   }
   .result-head {
     display: flex;
@@ -379,24 +379,24 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #17131f;
-      --card: #221c30;
-      --accent: #a78bfa;
-      --accent-2: #f472b6;
-      --accent-soft: #2e2543;
-      --text: #f1edfb;
-      --muted: #9c93b5;
-      --border: #362c4a;
-      --warn-soft: #382b17;
+      --bg: #0b1a20;
+      --card: #102630;
+      --accent: #38bdf8;
+      --accent-2: #2dd4bf;
+      --accent-soft: #123244;
+      --text: #e3f4f6;
+      --muted: #86aab3;
+      --border: #1d3944;
+      --warn-soft: #2a2013;
       --danger-soft: #3a1620;
     }
-    .person { background: #241d34; }
+    .person { background: #0f2129; }
     .station-field input,
     .add-person-btn,
     .mode-tabs button,
     .day-toggle button,
-    .suggestions { background: #1c1729; color: var(--text); }
-    .result-item { background: #1c1729; }
+    .suggestions { background: #0d1e25; color: var(--text); }
+    .result-item { background: #0d1e25; }
   }
 </style>
 </head>
