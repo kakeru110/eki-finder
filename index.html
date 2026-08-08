@@ -235,6 +235,7 @@
     gap: 6px;
     margin-bottom: 6px;
   }
+  .mode-tabs { grid-template-columns: repeat(3, 1fr); }
   .mode-tabs button, .day-toggle button {
     padding: 9px 6px;
     border: 1.5px solid var(--border);
@@ -269,20 +270,6 @@
   }
   .required-mark { background: var(--accent-soft); color: var(--accent); }
   .optional-mark { background: rgba(122,118,144,0.15); color: var(--muted); }
-  .inline-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 10px;
-    font-size: 0.8rem;
-  }
-  .inline-row input[type="time"] {
-    padding: 5px 7px;
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-family: inherit;
-  }
   .run-btn {
     display: block;
     width: 100%;
@@ -426,14 +413,10 @@
     <h2>2. 重視するモード</h2>
     <div class="mode-tabs" id="modeTabs"></div>
     <p class="mode-desc" id="modeDesc"></p>
-    <div class="inline-row" id="lastTrainRow" style="display:none;">
-      <label for="breakupTime">解散予定時刻</label>
-      <input type="time" id="breakupTime" value="21:30">
-    </div>
     <button class="run-btn" id="runBtn">合流駅を探す</button>
     <p class="form-error" id="formError"></p>
     <p class="notice">
-      ⚠️ 駅すぱあとAPI(実データ)で集合駅までの往復移動時間を計算します。API接続に失敗した場合は駅の位置関係からの概算値にフォールバックします。終電の余裕はいずれの場合も<strong>概算値</strong>です(時刻表データは未接続のため)。
+      ⚠️ 駅すぱあとAPI(実データ)で集合駅までの往復移動時間を計算します。API接続に失敗した場合は駅の位置関係からの<strong>概算値</strong>にフォールバックします。
     </p>
   </section>
 
@@ -639,15 +622,6 @@ function approxTravelMinutes(nameA, nameB) {
   const minutes = km * 2.1 + 12 + jitter;
   return Math.max(5, Math.round(minutes));
 }
-// 概算終電時刻(分, 0:00起点。都心ほど遅く、郊外ほど早い想定)
-function approxLastTrainMinutes(stationName) {
-  const s = coordsFor(stationName);
-  const center = { lat: 35.6812, lon: 139.7671 };
-  const km = haversineKm(s, center);
-  const t = 1470 - km * 1.5;
-  return Math.max(1380, Math.min(1470, t));
-}
-
 // ---- 出発地(平日=職場 / 休日=自宅) ----
 let departureMode = "weekday"; // "weekday" | "weekend"
 function isFieldRequired(input) {
@@ -860,15 +834,13 @@ document.addEventListener("click", (e) => {
 
 // ---- モードタブ ----
 const MODES = [
-  { id: "total", label: "📊 合計最短", desc: "全員の移動時間の合計が最も短い駅を優先します。" },
-  { id: "fair", label: "⚖️ 公平重視", desc: "移動時間の差(一番遠い人と近い人の差)が最も小さい駅を優先します。" },
-  { id: "lastTrain", label: "🌙 終電安心", desc: "解散予定時刻から逆算し、全員が最も余裕を持って終電に間に合う駅を優先します。" },
+  { id: "total", label: "📊 合計最短", desc: "全員の往復移動時間(職場⇄集合駅⇄自宅)の合計が最も短い駅を優先します。" },
+  { id: "fair", label: "⚖️ 公平重視", desc: "往復移動時間の差(一番遠い人と近い人の差)が最も小さい駅を優先します。" },
   { id: "fastest", label: "🏃 最速集合", desc: "最後の1人が到着するまでの時間が最も短い駅を優先します。" },
 ];
 let currentMode = "total";
 const modeTabs = document.getElementById("modeTabs");
 const modeDesc = document.getElementById("modeDesc");
-const lastTrainRow = document.getElementById("lastTrainRow");
 
 function renderModeTabs() {
   modeTabs.innerHTML = "";
@@ -881,7 +853,6 @@ function renderModeTabs() {
   });
   const active = MODES.find(m => m.id === currentMode);
   modeDesc.textContent = active.desc;
-  lastTrainRow.style.display = currentMode === "lastTrain" ? "flex" : "none";
 }
 renderModeTabs();
 
@@ -942,7 +913,7 @@ async function fetchRealCandidates(names, minutes) {
 // 平日: 往路(職場→集合駅)と復路(集合駅→自宅)の両方を実データで取得し合計する。
 // workCandidates/homeCandidatesは同じ駅コードで揃っているとは限らないため、
 // 両方に含まれる(=全員が往復とも到達できる)駅だけを候補として残す。
-function buildScoredFromReal(people, breakupMinutes, workCandidates, homeCandidates) {
+function buildScoredFromReal(people, workCandidates, homeCandidates) {
   const homeByCode = new Map(homeCandidates.map(c => [c.code, c]));
   return workCandidates
     .filter(c => homeByCode.has(c.code))
@@ -952,32 +923,25 @@ function buildScoredFromReal(people, breakupMinutes, workCandidates, homeCandida
         const toCandidate = c.minutesByPerson[i];
         const toHome = homeC.minutesByPerson[i];
         const roundTrip = toCandidate + toHome;
-        const lastTrain = approxLastTrainMinutes(p.home);
-        const requiredDeparture = lastTrain - toHome;
-        const margin = requiredDeparture - breakupMinutes;
-        return { ...p, toCandidate, toHome, roundTrip, margin };
+        return { ...p, toCandidate, toHome, roundTrip };
       });
       const roundTrips = legs.map(l => l.roundTrip);
       const arrivals = legs.map(l => l.toCandidate);
       const total = roundTrips.reduce((a,b) => a+b, 0);
       const spread = Math.max(...roundTrips) - Math.min(...roundTrips);
       const max = Math.max(...arrivals); // 最速集合は到着(往路)のみで判定
-      const minMargin = Math.min(...legs.map(l => l.margin));
-      return { candidate: c.name, legs, total, max, spread, minMargin };
+      return { candidate: c.name, legs, total, max, spread };
     });
 }
 
-function buildScoredApprox(people, breakupMinutes) {
+function buildScoredApprox(people) {
   const candidates = STATIONS.map(([name]) => name);
   return candidates.map(candidate => {
     const legs = people.map(p => {
       const toCandidate = approxTravelMinutes(p.from, candidate);
       const toHome = approxTravelMinutes(candidate, p.home);
       const roundTrip = toCandidate + toHome;
-      const lastTrain = approxLastTrainMinutes(p.home);
-      const requiredDeparture = lastTrain - toHome;
-      const margin = requiredDeparture - breakupMinutes;
-      return { ...p, toCandidate, toHome, roundTrip, margin };
+      return { ...p, toCandidate, toHome, roundTrip };
     });
 
     const roundTrips = legs.map(l => l.roundTrip);
@@ -985,9 +949,8 @@ function buildScoredApprox(people, breakupMinutes) {
     const total = roundTrips.reduce((a,b) => a+b, 0);
     const spread = Math.max(...roundTrips) - Math.min(...roundTrips);
     const max = Math.max(...arrivals);
-    const minMargin = Math.min(...legs.map(l => l.margin));
 
-    return { candidate, legs, total, max, spread, minMargin };
+    return { candidate, legs, total, max, spread };
   });
 }
 
@@ -999,10 +962,6 @@ document.getElementById("runBtn").addEventListener("click", async () => {
     return;
   }
   formError.classList.remove("show");
-
-  const breakupTimeStr = document.getElementById("breakupTime").value || "21:30";
-  const [bh, bm] = breakupTimeStr.split(":").map(Number);
-  const breakupMinutes = bh * 60 + bm;
 
   const hasUnlisted = people.some(p => p.fromUnlisted || p.homeUnlisted);
   const resultsEl = document.getElementById("results");
@@ -1026,35 +985,34 @@ document.getElementById("runBtn").addEventListener("click", async () => {
       homeCandidates = workCandidates;
     }
 
-    const merged = buildScoredFromReal(people, breakupMinutes, workCandidates, homeCandidates);
+    const merged = buildScoredFromReal(people, workCandidates, homeCandidates);
     if (merged.length === 0) {
       dataSourceNote = `実データAPIでは往復とも全員が${REAL_DATA_MINUTES}分以内に到達できる共通の駅が見つかりませんでした。移動時間の概算値で計算しています。`;
-      scored = buildScoredApprox(people, breakupMinutes);
+      scored = buildScoredApprox(people);
     } else {
       scored = merged;
       usedReal = true;
     }
   } catch (err) {
     dataSourceNote = "実データAPI(駅すぱあと)に接続できなかったため、移動時間の概算値で計算しています。";
-    scored = buildScoredApprox(people, breakupMinutes);
+    scored = buildScoredApprox(people);
   }
 
   let sorted;
   if (currentMode === "total") sorted = [...scored].sort((a,b) => a.total - b.total || a.max - b.max);
   else if (currentMode === "fair") sorted = [...scored].sort((a,b) => a.spread - b.spread || a.total - b.total);
-  else if (currentMode === "fastest") sorted = [...scored].sort((a,b) => a.max - b.max || a.total - b.total);
-  else sorted = [...scored].sort((a,b) => b.minMargin - a.minMargin || a.total - b.total);
+  else sorted = [...scored].sort((a,b) => a.max - b.max || a.total - b.total); // fastest
 
   const top = sorted.slice(0, 6);
   resultsEl.innerHTML = "";
 
   const sourceBanner = document.createElement("p");
   sourceBanner.className = "result-note" + (usedReal ? " source-real" : "");
-  sourceBanner.textContent = dataSourceNote || `駅すぱあとAPIの実データで計算しました(各人${REAL_DATA_MINUTES}分以内で探索)。終電の余裕は概算値です。`;
+  sourceBanner.textContent = dataSourceNote || `駅すぱあとAPIの実データで計算しました(各人${REAL_DATA_MINUTES}分以内で探索)。`;
   resultsEl.appendChild(sourceBanner);
 
   // 実データ使用時は toCandidate(集合駅までの移動)は本物なので、未登録駅マークは
-  // 帰宅・終電計算(常に概算)に影響するhomeUnlistedのみを対象にする
+  // 復路計算(常に概算)に影響するhomeUnlistedのみを対象にする
   const showsMark = usedReal ? people.some(p => p.homeUnlisted) : hasUnlisted;
 
   top.forEach((r, idx) => {
@@ -1063,16 +1021,12 @@ document.getElementById("runBtn").addEventListener("click", async () => {
     const scoreText =
       currentMode === "total" ? `往復合計 約${r.total}分` :
       currentMode === "fair" ? `往復の最大差 ${r.spread}分(合計 約${r.total}分)` :
-      currentMode === "fastest" ? `最後の到着まで 約${r.max}分` :
-      `最小余裕 ${r.minMargin >= 0 ? "+" : ""}${Math.round(r.minMargin)}分`;
+      `最後の到着まで 約${r.max}分`; // fastest
 
     const perPersonHtml = r.legs.map(l => {
       const unlisted = usedReal ? l.homeUnlisted : (l.fromUnlisted || l.homeUnlisted);
       const mark = unlisted ? " *" : "";
       let extra = `${l.name}${mark}: ${l.from}→約${l.toCandidate}分 + →${l.home}約${l.toHome}分 = 往復${l.roundTrip}分`;
-      if (currentMode === "lastTrain") {
-        extra += ` / 終電余裕 ${l.margin >= 0 ? "+" : ""}${Math.round(l.margin)}分`;
-      }
       return `<div>${extra}</div>`;
     }).join("");
 
@@ -1091,7 +1045,7 @@ document.getElementById("runBtn").addEventListener("click", async () => {
     const note = document.createElement("p");
     note.className = "result-note";
     note.textContent = usedReal
-      ? "* 印の自宅は候補一覧にない駅のため、帰宅時間・終電の余裕は駅名から推定した概算位置で計算しています"
+      ? "* 印の自宅は候補一覧にない駅のため、復路(集合駅→自宅)の時間は駅名から推定した概算位置で計算しています"
       : "* 印は未登録駅(候補一覧にない駅)のため、駅名から推定した概算位置で計算しています";
     resultsEl.appendChild(note);
   }
