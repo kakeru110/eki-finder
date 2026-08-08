@@ -1045,7 +1045,7 @@ document.getElementById("runBtn").addEventListener("click", async () => {
     const perPersonHtml = r.legs.map(l => {
       const unlisted = usedReal ? l.homeUnlisted : (l.fromUnlisted || l.homeUnlisted);
       const mark = unlisted ? " *" : "";
-      let extra = `${l.name}${mark}: 約${l.toCandidate}分`;
+      let extra = `${l.name}(${l.from}発)${mark}: 約${l.toCandidate}分`;
       if (currentMode === "lastTrain") {
         extra += ` / 帰宅約${l.toHome}分 / 余裕 ${l.margin >= 0 ? "+" : ""}${Math.round(l.margin)}分`;
       }
