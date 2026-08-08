@@ -5,7 +5,7 @@
 //   stations: 2〜8件、カンマ区切りの駅名(職場 or 自宅の最寄駅)
 //   minutes:  各駅からの上限所要時間(分, 10〜200)。省略時90分
 //
-// レスポンス: { stations, upperMinute, candidates: [{ code, name, prefecture, minutesByPerson: [...] }] }
+// レスポンス: { stations, upperMinute, candidates: [{ code, name, prefecture, minutesByPerson: [...], transfersByPerson: [...] }] }
 // candidates は stations 全員が upperMinute 以内に到達できる駅のみを含む。
 //
 // 駅すぱあとのレスポンスはXMLをJSON化したものなので、要素が1件のときは配列でなく
@@ -77,6 +77,7 @@ module.exports = async function handler(req, res) {
           name: station.Name || "",
           prefecture: (point.Prefecture && point.Prefecture.Name) || "",
           minutesByPerson: new Array(names.length).fill(null),
+          transfersByPerson: new Array(names.length).fill(null),
         });
       }
       const entry = candidates.get(code);
@@ -86,6 +87,7 @@ module.exports = async function handler(req, res) {
         const globalIdx = globalOffset + localIdx;
         if (globalIdx >= 0 && globalIdx < names.length) {
           entry.minutesByPerson[globalIdx] = Number(cost.Minute);
+          entry.transfersByPerson[globalIdx] = Number(cost.TransferCount);
         }
       }
     }

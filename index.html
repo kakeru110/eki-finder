@@ -935,7 +935,9 @@ function buildScoredFromReal(people, workCandidates, homeCandidates) {
         const toCandidate = c.minutesByPerson[i];
         const toHome = homeC.minutesByPerson[i];
         const roundTrip = toCandidate + toHome;
-        return { ...p, toCandidate, toHome, roundTrip };
+        const transfersOut = c.transfersByPerson[i];
+        const transfersHome = homeC.transfersByPerson[i];
+        return { ...p, toCandidate, toHome, roundTrip, transfersOut, transfersHome };
       });
       const roundTrips = legs.map(l => l.roundTrip);
       const arrivals = legs.map(l => l.toCandidate);
@@ -993,7 +995,11 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
     const perPersonHtml = r.legs.map(l => {
       const unlisted = usedReal ? l.homeUnlisted : (l.fromUnlisted || l.homeUnlisted);
       const mark = unlisted ? " *" : "";
-      let extra = `${l.name}${mark}: 往復${l.roundTrip}分(往${l.toCandidate}+復${l.toHome})`;
+      let extra = `${l.name}${mark}: 往復${l.roundTrip}分(往${l.toCandidate}分`;
+      if (usedReal && l.transfersOut != null) extra += `・乗換${l.transfersOut}`;
+      extra += `+復${l.toHome}分`;
+      if (usedReal && l.transfersHome != null) extra += `・乗換${l.transfersHome}`;
+      extra += `)`;
       return `<div>${extra}</div>`;
     }).join("");
 
