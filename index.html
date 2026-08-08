@@ -1010,14 +1010,16 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
   top.forEach((r, idx) => {
     const div = document.createElement("div");
     div.className = "result-item" + (idx === 0 ? " rank-1" : "");
-    const perPersonAvg = Math.round(r.total / r.legs.length);
+    // 往復合計をランキングには使ったまま、表示は「1人あたり片道」に換算する
+    // (往復2回ぶんの移動を人数で割った平均、= 通常イメージする片道の所要時間に近い)
+    const perPersonOneWay = Math.round(r.total / (r.legs.length * 2));
     const metric =
-      currentMode === "total" ? perPersonAvg :
+      currentMode === "total" ? perPersonOneWay :
       currentMode === "fair" ? r.spread :
       r.max; // fastest
     const scoreLabel =
-      currentMode === "total" ? "1人あたり往復" :
-      currentMode === "fair" ? `往復の最大差(1人あたり平均${perPersonAvg}分)` :
+      currentMode === "total" ? "1人あたり片道" :
+      currentMode === "fair" ? `往復の最大差(1人あたり片道平均${perPersonOneWay}分)` :
       "最後の到着まで";
 
     const perPersonHtml = r.legs.map(l => {
