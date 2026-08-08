@@ -352,6 +352,49 @@
     margin-bottom: 8px;
   }
   .result-note.source-real { color: var(--good); }
+  .detail-toggle {
+    margin-top: 6px;
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 0;
+    font-family: inherit;
+  }
+  .route-detail {
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+  }
+  .route-person { margin-bottom: 6px; }
+  .route-person:last-child { margin-bottom: 0; }
+  .route-person-name {
+    font-size: 0.76rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .route-leg {
+    font-size: 0.72rem;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .route-leg-label {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 0.66rem;
+    padding: 1px 6px;
+    border-radius: 999px;
+    margin-right: 5px;
+  }
+  .route-step {
+    margin: 2px 0 2px 4px;
+    color: var(--muted);
+    font-size: 0.7rem;
+  }
   .empty-hint {
     color: var(--muted);
     font-size: 0.84rem;
@@ -909,8 +952,30 @@ const formError = document.getElementById("formError");
 
 // 範囲探索(実データ)を持つVercelサーバーレス関数。EKISPERT_API_KEYはここには置かず、
 // サーバー側の環境変数として保持している。
-const PROXY_BASE = "https://eki-finder.vercel.app/api/multi-range";
+const API_ROOT = "https://eki-finder.vercel.app";
+const PROXY_BASE = `${API_ROOT}/api/multi-range`;
 const REAL_DATA_MINUTES = 90; // 各人の上限探索時間(分)
+
+// 経路詳細(乗換駅・路線名)は結果クリック時にだけ個別取得するので、同じ区間を
+// 何度も叩かないようキャッシュしておく
+const routeDetailCache = new Map(); // "from→to" -> detail obj | { error }
+
+async function fetchRouteDetail(from, to) {
+  const key = `${from}→${to}`;
+  if (routeDetailCache.has(key)) return routeDetailCache.get(key);
+  let result;
+  try {
+    const url = `${API_ROOT}/api/route-detail?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
+    const res = await fetch(url);
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || data.error) throw new Error((data && data.error) || `HTTP ${res.status}`);
+    result = data;
+  } catch (err) {
+    result = { error: err.message || String(err) };
+  }
+  routeDetailCache.set(key, result);
+  return result;
+}
 
 async function fetchRealCandidates(names, minutes) {
   const url = `${PROXY_BASE}?stations=${encodeURIComponent(names.join(","))}&minutes=${minutes}`;
@@ -987,6 +1052,7 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
   top.forEach((r, idx) => {
     const div = document.createElement("div");
     div.className = "result-item" + (idx === 0 ? " rank-1" : "");
+    div.dataset.candidate = r.candidate;
     const scoreText =
       currentMode === "total" ? `往復合計 約${r.total}分` :
       currentMode === "fair" ? `往復の最大差 ${r.spread}分(合計 約${r.total}分)` :
@@ -1010,6 +1076,8 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
         <span class="score">${scoreText}</span>
       </div>
       <div class="per-person">${perPersonHtml}</div>
+      <button class="detail-toggle" type="button">乗換・路線の詳細を見る ▾</button>
+      <div class="route-detail" style="display:none;"></div>
     `;
     resultsEl.appendChild(div);
   });
@@ -1027,6 +1095,64 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
     resultsEl.innerHTML = `<p class="empty-hint">候補駅が見つかりませんでした。駅名や上限時間を確認してください。</p>`;
   }
 }
+
+function renderRouteLeg(label, detail) {
+  if (!detail) return "";
+  if (detail.error) {
+    return `<div class="route-leg"><span class="route-leg-label">${label}</span>取得失敗(${detail.error})</div>`;
+  }
+  const steps = detail.legs.map(leg => {
+    const clock = (leg.departureTime && leg.arrivalTime) ? ` ${leg.departureTime}→${leg.arrivalTime}` : "";
+    const dest = leg.destination ? `(${leg.destination}行)` : "";
+    return `<div class="route-step">${leg.from} →<b>${leg.line}</b>${dest} 約${leg.minutes}分${clock}→ ${leg.to}</div>`;
+  }).join("");
+  return `
+    <div class="route-leg">
+      <span class="route-leg-label">${label}</span>乗換${detail.transferCount}回・約${detail.totalMinutes}分
+      ${steps}
+    </div>`;
+}
+
+// 結果カードの「詳細を見る」はクリック時に初めてAPIを叩く(全件を先読みしない)
+document.getElementById("results").addEventListener("click", async (e) => {
+  const btn = e.target.closest(".detail-toggle");
+  if (!btn) return;
+  const panel = btn.nextElementSibling;
+  const isOpen = panel.style.display !== "none";
+  if (isOpen) {
+    panel.style.display = "none";
+    btn.textContent = "乗換・路線の詳細を見る ▾";
+    return;
+  }
+  panel.style.display = "block";
+  btn.textContent = "詳細を閉じる ▴";
+  if (panel.dataset.loaded === "1") return;
+
+  const candidateName = btn.closest(".result-item").dataset.candidate;
+  const r = lastSearch && lastSearch.scored.find(x => x.candidate === candidateName);
+  if (!r) {
+    panel.innerHTML = `<p class="empty-hint">結果が古くなっています。もう一度検索してください。</p>`;
+    return;
+  }
+  panel.innerHTML = `<p class="empty-hint">読み込み中...</p>`;
+
+  const sections = await Promise.all(r.legs.map(async (l) => {
+    const [out, back] = await Promise.all([
+      fetchRouteDetail(l.from, r.candidate),
+      fetchRouteDetail(r.candidate, l.home),
+    ]);
+    return { name: l.name, out, back };
+  }));
+
+  panel.innerHTML = sections.map(s => `
+    <div class="route-person">
+      <div class="route-person-name">${s.name}</div>
+      ${renderRouteLeg("往路", s.out)}
+      ${renderRouteLeg("復路", s.back)}
+    </div>
+  `).join("");
+  panel.dataset.loaded = "1";
+});
 
 document.getElementById("runBtn").addEventListener("click", async () => {
   const { people, error } = collectPeople();
