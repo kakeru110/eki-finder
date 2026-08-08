@@ -317,7 +317,7 @@
   .result-head {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
     flex-wrap: wrap;
     gap: 6px;
   }
@@ -333,9 +333,32 @@
     border-radius: 999px;
     font-weight: 700;
   }
-  .result-head .score {
-    font-size: 0.78rem;
+  .score-hero {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    margin-top: 3px;
+  }
+  .score-hero .score-value {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .score-hero .score-unit {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .score-hero .score-label {
+    font-size: 0.72rem;
     color: var(--muted);
+  }
+  .score-reason {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--good);
+    margin-top: 2px;
   }
   .per-person {
     display: grid;
@@ -384,6 +407,7 @@
     .day-toggle button,
     .suggestions { background: #0d1e25; color: var(--text); }
     .result-item { background: #0d1e25; }
+    .result-item.rank-1 { background: linear-gradient(135deg, var(--accent-soft), #103b39); }
   }
 </style>
 </head>
@@ -987,10 +1011,26 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
   top.forEach((r, idx) => {
     const div = document.createElement("div");
     div.className = "result-item" + (idx === 0 ? " rank-1" : "");
-    const scoreText =
-      currentMode === "total" ? `往復合計 約${r.total}分` :
-      currentMode === "fair" ? `往復の最大差 ${r.spread}分(合計 約${r.total}分)` :
-      `最後の到着まで 約${r.max}分`; // fastest
+    const metric =
+      currentMode === "total" ? r.total :
+      currentMode === "fair" ? r.spread :
+      r.max; // fastest
+    const scoreLabel =
+      currentMode === "total" ? "往復合計" :
+      currentMode === "fair" ? `往復の最大差(合計 約${r.total}分)` :
+      "最後の到着まで";
+
+    let reasonHtml = "";
+    if (idx === 0 && top.length > 1) {
+      const nextMetric =
+        currentMode === "total" ? top[1].total :
+        currentMode === "fair" ? top[1].spread :
+        top[1].max;
+      const diff = nextMetric - metric;
+      reasonHtml = diff > 0
+        ? `<div class="score-reason">✓ 2位(${top[1].candidate}駅)より${diff}分優位</div>`
+        : `<div class="score-reason">✓ 2位(${top[1].candidate}駅)とほぼ同条件です</div>`;
+    }
 
     const perPersonHtml = r.legs.map(l => {
       const unlisted = usedReal ? l.homeUnlisted : (l.fromUnlisted || l.homeUnlisted);
@@ -1007,8 +1047,12 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
       <div class="result-head">
         <span class="station-name">${idx + 1}. ${r.candidate}駅</span>
         ${idx === 0 ? '<span class="badge">おすすめ</span>' : ''}
-        <span class="score">${scoreText}</span>
       </div>
+      <div class="score-hero">
+        <span class="score-value">${metric}</span><span class="score-unit">分</span>
+        <span class="score-label">${scoreLabel}</span>
+      </div>
+      ${reasonHtml}
       <div class="per-person">${perPersonHtml}</div>
     `;
     resultsEl.appendChild(div);
