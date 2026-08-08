@@ -362,7 +362,9 @@
     font-size: 0.68rem;
     color: var(--warn);
     margin-top: 6px;
+    margin-bottom: 8px;
   }
+  .result-note.source-real { color: var(--good); }
   .empty-hint {
     color: var(--muted);
     font-size: 0.84rem;
@@ -431,7 +433,7 @@
     <button class="run-btn" id="runBtn">合流駅を探す</button>
     <p class="form-error" id="formError"></p>
     <p class="notice">
-      ⚠️ 実際の乗換案内APIに未接続のため、所要時間・終電は駅の位置関係からの<strong>概算値</strong>です。実際の乗換時間・終電時刻とは異なります。
+      ⚠️ 駅すぱあとAPI(実データ)で集合駅までの移動時間を計算します。API接続に失敗した場合は駅の位置関係からの概算値にフォールバックします。終電の余裕はいずれの場合も<strong>概算値</strong>です(時刻表データは未接続のため)。
     </p>
   </section>
 
@@ -887,23 +889,45 @@ function collectPeople() {
 
 const formError = document.getElementById("formError");
 
-document.getElementById("runBtn").addEventListener("click", () => {
-  const { people, error } = collectPeople();
-  if (error) {
-    formError.textContent = error;
-    formError.classList.add("show");
-    return;
+// 範囲探索(実データ)を持つVercelサーバーレス関数。EKISPERT_API_KEYはここには置かず、
+// サーバー側の環境変数として保持している。
+const PROXY_BASE = "https://eki-finder.vercel.app/api/multi-range";
+const REAL_DATA_MINUTES = 90; // 各人の上限探索時間(分)
+
+async function fetchRealCandidates(people, minutes) {
+  const names = people.map(p => p.from);
+  const url = `${PROXY_BASE}?stations=${encodeURIComponent(names.join(","))}&minutes=${minutes}`;
+  const res = await fetch(url);
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data || data.error) {
+    throw new Error((data && data.error) || `HTTP ${res.status}`);
   }
-  formError.classList.remove("show");
+  return data.candidates || [];
+}
 
-  const breakupTimeStr = document.getElementById("breakupTime").value || "21:30";
-  const [bh, bm] = breakupTimeStr.split(":").map(Number);
-  const breakupMinutes = bh * 60 + bm;
+function buildScoredFromReal(people, breakupMinutes, realCandidates) {
+  return realCandidates.map(c => {
+    const legs = people.map((p, i) => {
+      const toCandidate = c.minutesByPerson[i];
+      const toHome = approxTravelMinutes(c.name, p.home);
+      const lastTrain = approxLastTrainMinutes(p.home);
+      const requiredDeparture = lastTrain - toHome;
+      const margin = requiredDeparture - breakupMinutes;
+      return { ...p, toCandidate, toHome, margin };
+    });
+    const times = legs.map(l => l.toCandidate);
+    const total = times.reduce((a,b) => a+b, 0);
+    const max = Math.max(...times);
+    const min = Math.min(...times);
+    const spread = max - min;
+    const minMargin = Math.min(...legs.map(l => l.margin));
+    return { candidate: c.name, legs, total, max, spread, minMargin };
+  });
+}
 
-  const hasUnlisted = people.some(p => p.fromUnlisted || p.homeUnlisted);
-  const resultsEl = document.getElementById("results");
+function buildScoredApprox(people, breakupMinutes) {
   const candidates = STATIONS.map(([name]) => name);
-  const scored = candidates.map(candidate => {
+  return candidates.map(candidate => {
     const legs = people.map(p => {
       const toCandidate = approxTravelMinutes(p.from, candidate);
       const toHome = approxTravelMinutes(candidate, p.home);
@@ -922,6 +946,41 @@ document.getElementById("runBtn").addEventListener("click", () => {
 
     return { candidate, legs, total, max, spread, minMargin };
   });
+}
+
+document.getElementById("runBtn").addEventListener("click", async () => {
+  const { people, error } = collectPeople();
+  if (error) {
+    formError.textContent = error;
+    formError.classList.add("show");
+    return;
+  }
+  formError.classList.remove("show");
+
+  const breakupTimeStr = document.getElementById("breakupTime").value || "21:30";
+  const [bh, bm] = breakupTimeStr.split(":").map(Number);
+  const breakupMinutes = bh * 60 + bm;
+
+  const hasUnlisted = people.some(p => p.fromUnlisted || p.homeUnlisted);
+  const resultsEl = document.getElementById("results");
+  resultsEl.innerHTML = `<p class="empty-hint">検索中(実データAPIに接続しています)...</p>`;
+
+  let scored;
+  let dataSourceNote = "";
+  let usedReal = false;
+  try {
+    const realCandidates = await fetchRealCandidates(people, REAL_DATA_MINUTES);
+    if (realCandidates.length === 0) {
+      dataSourceNote = `実データAPIでは全員が${REAL_DATA_MINUTES}分以内に到達できる共通の駅が見つかりませんでした。移動時間の概算値で計算しています。`;
+      scored = buildScoredApprox(people, breakupMinutes);
+    } else {
+      scored = buildScoredFromReal(people, breakupMinutes, realCandidates);
+      usedReal = true;
+    }
+  } catch (err) {
+    dataSourceNote = "実データAPI(駅すぱあと)に接続できなかったため、移動時間の概算値で計算しています。";
+    scored = buildScoredApprox(people, breakupMinutes);
+  }
 
   let sorted;
   if (currentMode === "total") sorted = [...scored].sort((a,b) => a.total - b.total || a.max - b.max);
@@ -931,6 +990,16 @@ document.getElementById("runBtn").addEventListener("click", () => {
 
   const top = sorted.slice(0, 6);
   resultsEl.innerHTML = "";
+
+  const sourceBanner = document.createElement("p");
+  sourceBanner.className = "result-note" + (usedReal ? " source-real" : "");
+  sourceBanner.textContent = dataSourceNote || `駅すぱあとAPIの実データで計算しました(各人${REAL_DATA_MINUTES}分以内で探索)。終電の余裕は概算値です。`;
+  resultsEl.appendChild(sourceBanner);
+
+  // 実データ使用時は toCandidate(集合駅までの移動)は本物なので、未登録駅マークは
+  // 帰宅・終電計算(常に概算)に影響するhomeUnlistedのみを対象にする
+  const showsMark = usedReal ? people.some(p => p.homeUnlisted) : hasUnlisted;
+
   top.forEach((r, idx) => {
     const div = document.createElement("div");
     div.className = "result-item" + (idx === 0 ? " rank-1" : "");
@@ -941,7 +1010,8 @@ document.getElementById("runBtn").addEventListener("click", () => {
       `最小余裕 ${r.minMargin >= 0 ? "+" : ""}${Math.round(r.minMargin)}分`;
 
     const perPersonHtml = r.legs.map(l => {
-      const mark = (l.fromUnlisted || l.homeUnlisted) ? " *" : "";
+      const unlisted = usedReal ? l.homeUnlisted : (l.fromUnlisted || l.homeUnlisted);
+      const mark = unlisted ? " *" : "";
       let extra = `${l.name}${mark}: 約${l.toCandidate}分`;
       if (currentMode === "lastTrain") {
         extra += ` / 帰宅約${l.toHome}分 / 余裕 ${l.margin >= 0 ? "+" : ""}${Math.round(l.margin)}分`;
@@ -960,11 +1030,17 @@ document.getElementById("runBtn").addEventListener("click", () => {
     resultsEl.appendChild(div);
   });
 
-  if (hasUnlisted) {
+  if (showsMark) {
     const note = document.createElement("p");
     note.className = "result-note";
-    note.textContent = "* 印は未登録駅(候補一覧にない駅)のため、駅名から推定した概算位置で計算しています";
+    note.textContent = usedReal
+      ? "* 印の自宅は候補一覧にない駅のため、帰宅時間・終電の余裕は駅名から推定した概算位置で計算しています"
+      : "* 印は未登録駅(候補一覧にない駅)のため、駅名から推定した概算位置で計算しています";
     resultsEl.appendChild(note);
+  }
+
+  if (top.length === 0) {
+    resultsEl.innerHTML = `<p class="empty-hint">候補駅が見つかりませんでした。駅名や上限時間を確認してください。</p>`;
   }
 });
 </script>
