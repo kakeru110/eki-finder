@@ -10,6 +10,13 @@
 //
 // 駅すぱあとのレスポンスはXMLをJSON化したものなので、要素が1件のときは配列でなく
 // オブジェクトになる(既知の挙動)。toArray() で必ず配列に正規化して扱う。
+//
+// 同名駅が複数県にまたがって存在する場合(例: 「田町」は東京都のJR駅の他に高知県にも
+// 存在する)、修飾なしの駅名だと E102「駅名が見つかりません」で失敗することがある。
+// この場合サーバー側で「駅名(都道府県)」の形に付け替えて自動リトライする。
+
+const KANTO_PREFS = ["東京都", "神奈川県", "埼玉県", "千葉県"];
+const MAX_RETRIES_PER_BATCH = 8;
 
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -52,33 +59,11 @@ module.exports = async function handler(req, res) {
   let globalOffset = 0;
 
   for (const batch of batches) {
-    const baseList = batch.map((n) => encodeURIComponent(n)).join(":");
-    const upperMinuteList = batch.map(() => upperMinute).join(":");
-    const url =
-      `https://api.ekispert.jp/v1/json/search/multipleRange` +
-      `?key=${encodeURIComponent(apiKey)}&baseList=${baseList}&upperMinute=${upperMinuteList}` +
-      `&plane=false&shinkansen=false`;
-
-    let data;
+    let resultSet;
     try {
-      const r = await fetch(url);
-      data = await r.json();
-      if (!r.ok) {
-        res.status(502).json({ error: `ekispert API HTTP ${r.status}`, detail: data });
-        return;
-      }
+      resultSet = await callWithDisambiguation(apiKey, batch, upperMinute);
     } catch (err) {
-      res.status(502).json({ error: "failed to reach ekispert API", detail: String(err) });
-      return;
-    }
-
-    if (data && data.ResultSet && data.ResultSet.Error) {
-      res.status(502).json({ error: "ekispert API error", detail: data.ResultSet.Error });
-      return;
-    }
-    const resultSet = data && data.ResultSet;
-    if (!resultSet) {
-      res.status(502).json({ error: "unexpected response shape from ekispert API", raw: data });
+      res.status(502).json({ error: err.message || String(err) });
       return;
     }
 
@@ -111,10 +96,60 @@ module.exports = async function handler(req, res) {
   const full = [...candidates.values()].filter((c) => c.minutesByPerson.every((m) => m !== null));
 
   res.status(200).json({ stations: names, upperMinute, candidates: full });
+};
+
+// baseNamesのいずれかがE102(駅名が見つかりません)で失敗したら、その駅名に
+// 都道府県修飾子を順番に付けてリトライする。成功したらResultSetを返す。
+async function callWithDisambiguation(apiKey, baseNames, upperMinute) {
+  const names = [...baseNames];
+  for (let attempt = 0; attempt < MAX_RETRIES_PER_BATCH; attempt++) {
+    const data = await callMultiRange(apiKey, names, upperMinute);
+    const err = data && data.ResultSet && data.ResultSet.Error;
+    if (!err) return data.ResultSet;
+
+    if (err.code === "E102") {
+      const match = /\(([^)]+)\)\s*$/.exec(err.Message || "");
+      const failingName = match ? match[1] : null;
+      const idx = failingName ? names.indexOf(failingName) : -1;
+      if (idx === -1) {
+        throw new Error(`ekispert API error ${err.code}: ${err.Message}`);
+      }
+      const currentQualifier = /\(([^)]+)\)$/.exec(failingName);
+      const baseName = currentQualifier ? failingName.slice(0, currentQualifier.index) : failingName;
+      const nextPrefIndex = currentQualifier ? KANTO_PREFS.indexOf(currentQualifier[1]) + 1 : 0;
+      if (nextPrefIndex >= KANTO_PREFS.length) {
+        throw new Error(`駅名を解決できませんでした: ${baseName}`);
+      }
+      names[idx] = `${baseName}(${KANTO_PREFS[nextPrefIndex]})`;
+      continue;
+    }
+    throw new Error(`ekispert API error ${err.code}: ${err.Message}`);
+  }
+  throw new Error("駅名解決の再試行回数が上限に達しました");
+}
+
+async function callMultiRange(apiKey, baseNames, upperMinute) {
+  const baseList = baseNames.map((n) => encodeURIComponent(n)).join(":");
+  const upperMinuteList = baseNames.map(() => upperMinute).join(":");
+  const url =
+    `https://api.ekispert.jp/v1/json/search/multipleRange` +
+    `?key=${encodeURIComponent(apiKey)}&baseList=${baseList}&upperMinute=${upperMinuteList}` +
+    `&plane=false&shinkansen=false`;
+
+  let r;
+  try {
+    r = await fetch(url);
+  } catch (err) {
+    throw new Error(`ekispert APIに接続できませんでした: ${err}`);
+  }
+  const data = await r.json().catch(() => null);
+  if (!data || !data.ResultSet) {
+    throw new Error(`ekispert APIの応答が不正です(HTTP ${r.status})`);
+  }
+  return data;
 }
 
 function toArray(x) {
   if (x === undefined || x === null) return [];
   return Array.isArray(x) ? x : [x];
 }
-
