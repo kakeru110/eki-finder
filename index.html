@@ -37,7 +37,7 @@
     overflow: hidden;
     background: linear-gradient(135deg, #0284c7, #06b6d4 55%, #0d9488);
     color: #fff;
-    padding: 18px 16px 16px;
+    padding: 13px 16px 11px;
   }
   header::before, header::after {
     content: "";
@@ -63,18 +63,18 @@
   main {
     max-width: 720px;
     margin: 0 auto;
-    padding: 14px 12px 50px;
+    padding: 10px 12px 32px;
   }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 14px 14px 16px;
-    margin-bottom: 12px;
+    border-radius: 14px;
+    padding: 11px 12px 12px;
+    margin-bottom: 9px;
     box-shadow: 0 2px 10px rgba(2,132,199,0.06);
   }
   .card h2 {
-    margin: 0 0 10px;
+    margin: 0 0 8px;
     font-size: 0.92rem;
     font-weight: 700;
     display: flex;
@@ -97,15 +97,15 @@
   }
   .person {
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 8px 9px 9px;
+    border-radius: 11px;
+    padding: 7px 8px 8px;
     background: #f2fbfc;
   }
   .person-head {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   .person-head .p-name {
     flex: 1;
@@ -212,9 +212,9 @@
   }
   .suggestions li.no-match-option:hover { background: var(--warn-soft); }
   .add-person-btn {
-    margin-top: 8px;
+    margin-top: 6px;
     width: 100%;
-    padding: 8px;
+    padding: 7px;
     border: 1.5px dashed #9fd4da;
     border-radius: 10px;
     background: #fff;
@@ -233,11 +233,11 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 6px;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
   .mode-tabs { grid-template-columns: repeat(3, 1fr); }
   .mode-tabs button, .day-toggle button {
-    padding: 9px 6px;
+    padding: 7px 6px;
     border: 1.5px solid var(--border);
     background: #fff;
     border-radius: 999px;
@@ -253,11 +253,11 @@
     color: #fff;
     box-shadow: 0 3px 10px rgba(2,132,199,0.28);
   }
-  .day-toggle { margin-bottom: 4px; }
+  .day-toggle { margin-bottom: 3px; }
   .mode-desc {
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     color: var(--muted);
-    margin: 4px 0 0;
+    margin: 3px 0 0;
   }
   .required-mark, .optional-mark {
     display: inline-block;
@@ -273,7 +273,7 @@
   .run-btn {
     display: block;
     width: 100%;
-    padding: 13px;
+    padding: 11px;
     border: none;
     border-radius: 12px;
     background: linear-gradient(120deg, var(--accent), var(--accent-2));
@@ -281,7 +281,7 @@
     font-size: 0.95rem;
     font-weight: 700;
     cursor: pointer;
-    margin-top: 10px;
+    margin-top: 8px;
     font-family: inherit;
     box-shadow: 0 4px 14px rgba(2,132,199,0.32);
   }
@@ -294,20 +294,20 @@
   }
   .form-error.show { display: block; }
   .notice {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--warn);
     background: var(--warn-soft);
     border: 1px solid #f1dcb0;
     border-radius: 10px;
-    padding: 7px 9px;
-    margin-top: 8px;
+    padding: 6px 8px;
+    margin-top: 6px;
   }
   #results { margin-top: 2px; }
   .result-item {
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
+    border-radius: 11px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
     background: #fff;
   }
   .result-item.rank-1 {
@@ -401,8 +401,8 @@
   <section class="card">
     <h2>1. 最寄駅を入力 <span class="count-badge" id="peopleCountBadge"></span></h2>
     <div class="day-toggle" id="dayToggle">
-      <button type="button" data-day="weekday" class="active">🏢 平日(職場から集合)</button>
-      <button type="button" data-day="weekend">🏠 休日(自宅から集合)</button>
+      <button type="button" data-day="homeOnly" class="active">🏠 自宅だけ</button>
+      <button type="button" data-day="workHome">🏢 職場と自宅</button>
     </div>
     <p class="mode-desc" id="dayDesc"></p>
     <div class="people-grid" id="peopleGrid"></div>
@@ -622,16 +622,16 @@ function approxTravelMinutes(nameA, nameB) {
   const minutes = km * 2.1 + 12 + jitter;
   return Math.max(5, Math.round(minutes));
 }
-// ---- 出発地(平日=職場 / 休日=自宅) ----
-let departureMode = "weekday"; // "weekday" | "weekend"
+// ---- 入力パターン(自宅だけ / 職場と自宅) ----
+let departureMode = "homeOnly"; // "homeOnly" | "workHome"
 function isFieldRequired(input) {
   const isWork = input.classList.contains("p-work");
-  // 平日は往路(職場→集合駅)と復路(集合駅→自宅)の合計で計算するため両方必須。
-  // 休日は自宅が往路・復路どちらの起点にもなるので自宅のみ必須。
-  return isWork ? departureMode === "weekday" : true;
+  // 職場と自宅パターンは往路(職場→集合駅)と復路(集合駅→自宅)の合計で計算するため両方必須。
+  // 自宅だけパターンは自宅が往路・復路どちらの起点にもなるので自宅のみ必須。
+  return isWork ? departureMode === "workHome" : true;
 }
 function fieldLabelHtml(kind) {
-  const required = kind === "work" ? departureMode === "weekday" : true;
+  const required = kind === "work" ? departureMode === "workHome" : true;
   const base = kind === "work" ? "職場の最寄駅" : "自宅の最寄駅";
   return `${base}<span class="${required ? "required-mark" : "optional-mark"}">${required ? "必須" : "任意"}</span>`;
 }
@@ -720,9 +720,9 @@ function renderDayToggle() {
   [...dayToggle.querySelectorAll("button")].forEach(btn => {
     btn.classList.toggle("active", btn.dataset.day === departureMode);
   });
-  dayDesc.textContent = departureMode === "weekday"
-    ? "職場→集合駅(往路)と集合駅→自宅(復路)の合計時間で計算します。両方入力してください。"
-    : "自宅発着(集合駅までの往復)で計算します。職場は使いません。";
+  dayDesc.textContent = departureMode === "workHome"
+    ? "職場↔集合駅と集合駅↔自宅の合計時間で計算(両方入力)"
+    : "自宅↔集合駅の往復で計算(職場は不要)";
 }
 dayToggle.addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-day]");
@@ -887,7 +887,7 @@ function collectPeople() {
     const homeOk = validateField(homeInput, isFieldRequired(homeInput));
     if (!workOk || !homeOk) { hasError = true; return; }
 
-    const from = departureMode === "weekday" ? (work || home) : (home || work);
+    const from = departureMode === "workHome" ? (work || home) : (home || work);
     const actualHome = home || work;
     const name = nameInput.value.trim() || `${idx + 1}人目`;
     people.push({
@@ -899,7 +899,7 @@ function collectPeople() {
 
   if (hasError) return { error: "赤枠の駅名を修正してください(候補から選ぶか、未登録駅として使うを選択してください)" };
   if (people.length < MIN_PEOPLE) {
-    const need = departureMode === "weekday" ? "職場・自宅" : "自宅";
+    const need = departureMode === "workHome" ? "職場・自宅" : "自宅";
     return { error: `最低${MIN_PEOPLE}人分は${need}の最寄駅を入力してください` };
   }
   return { people };
@@ -993,7 +993,7 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
     const perPersonHtml = r.legs.map(l => {
       const unlisted = usedReal ? l.homeUnlisted : (l.fromUnlisted || l.homeUnlisted);
       const mark = unlisted ? " *" : "";
-      let extra = `${l.name}${mark}: ${l.from}→約${l.toCandidate}分 + →${l.home}約${l.toHome}分 = 往復${l.roundTrip}分`;
+      let extra = `${l.name}${mark}: 往復${l.roundTrip}分(往${l.toCandidate}+復${l.toHome})`;
       return `<div>${extra}</div>`;
     }).join("");
 
@@ -1042,9 +1042,9 @@ document.getElementById("runBtn").addEventListener("click", async () => {
   try {
     const workNames = people.map(p => p.from);
     const homeNames = people.map(p => p.home);
-    // 休日は往路・復路の起点が同じ(自宅)なので、実データAPIの呼び出しを使い回して節約する
+    // 自宅だけパターンは往路・復路の起点が同じ(自宅)なので、実データAPIの呼び出しを使い回して節約する
     let workCandidates, homeCandidates;
-    if (departureMode === "weekday") {
+    if (departureMode === "workHome") {
       [workCandidates, homeCandidates] = await Promise.all([
         fetchRealCandidates(workNames, REAL_DATA_MINUTES),
         fetchRealCandidates(homeNames, REAL_DATA_MINUTES),
