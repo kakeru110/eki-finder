@@ -355,6 +355,12 @@
     font-size: 0.72rem;
     color: var(--muted);
   }
+  .score-sub {
+    font-size: 0.76rem;
+    color: var(--text);
+    margin-top: 2px;
+  }
+  .score-sub b { color: var(--accent-2); font-size: 0.88rem; }
   .per-person {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -1013,14 +1019,12 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
     // 往復合計をランキングには使ったまま、表示は「1人あたり片道」に換算する
     // (往復2回ぶんの移動を人数で割った平均、= 通常イメージする片道の所要時間に近い)
     const perPersonOneWay = Math.round(r.total / (r.legs.length * 2));
-    const metric =
-      currentMode === "total" ? perPersonOneWay :
-      currentMode === "fair" ? r.spread :
-      r.max; // fastest
-    const scoreLabel =
-      currentMode === "total" ? "1人あたり片道" :
-      currentMode === "fair" ? `往復の最大差(1人あたり片道平均${perPersonOneWay}分)` :
-      "最後の到着まで";
+    const oneWaySpread = Math.round(r.spread / 2); // 往復差も同様に片道換算
+    const metric = currentMode === "fastest" ? r.max : perPersonOneWay;
+    const scoreLabel = currentMode === "fastest" ? "最後の到着まで" : "1人あたり片道";
+    const spreadHtml = currentMode === "fair"
+      ? `<div class="score-sub">みんなの差 <b>${oneWaySpread}分</b>(片道換算)</div>`
+      : "";
 
     const perPersonHtml = r.legs.map(l => {
       const unlisted = usedReal ? l.homeUnlisted : (l.fromUnlisted || l.homeUnlisted);
@@ -1050,6 +1054,7 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
         <span class="score-value">${metric}</span><span class="score-unit">分</span>
         <span class="score-label">${scoreLabel}</span>
       </div>
+      ${spreadHtml}
       <div class="per-person">${perPersonHtml}</div>
     `;
     resultsEl.appendChild(div);
