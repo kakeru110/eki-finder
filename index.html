@@ -694,12 +694,14 @@ function escapeAttr(s) {
 function addPerson() {
   if (peopleIds.length >= MAX_PEOPLE) return;
   peopleIds.push(nextId++);
+  lastSearch = null;
   renderPeople();
 }
 function removePerson(id) {
   if (peopleIds.length <= MIN_PEOPLE) return;
   peopleIds = peopleIds.filter(x => x !== id);
   peopleData.delete(id);
+  lastSearch = null;
   renderPeople();
 }
 
@@ -726,6 +728,7 @@ dayToggle.addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-day]");
   if (!btn || btn.dataset.day === departureMode) return;
   departureMode = btn.dataset.day;
+  lastSearch = null;
   renderDayToggle();
   renderPeople();
 });
@@ -735,6 +738,7 @@ renderDayToggle();
 peopleGrid.addEventListener("input", (e) => {
   const card = e.target.closest(".person");
   if (!card) return;
+  lastSearch = null;
   const id = Number(card.dataset.id);
   const d = ensureData(id);
   if (e.target.classList.contains("p-name")) d.name = e.target.value;
@@ -842,13 +846,21 @@ let currentMode = "total";
 const modeTabs = document.getElementById("modeTabs");
 const modeDesc = document.getElementById("modeDesc");
 
+// 直前の検索結果をキャッシュしておき、モード切り替え時はAPIを叩き直さずに
+// 並べ替えだけで結果を更新する(total/spread/maxは1回の検索で全モード分そろっている)
+let lastSearch = null; // { scored, usedReal, dataSourceNote, showsMark }
+
 function renderModeTabs() {
   modeTabs.innerHTML = "";
   MODES.forEach(m => {
     const btn = document.createElement("button");
     btn.textContent = m.label;
     if (m.id === currentMode) btn.classList.add("active");
-    btn.addEventListener("click", () => { currentMode = m.id; renderModeTabs(); });
+    btn.addEventListener("click", () => {
+      currentMode = m.id;
+      renderModeTabs();
+      if (lastSearch) renderResults(lastSearch);
+    });
     modeTabs.appendChild(btn);
   });
   const active = MODES.find(m => m.id === currentMode);
@@ -954,49 +966,8 @@ function buildScoredApprox(people) {
   });
 }
 
-document.getElementById("runBtn").addEventListener("click", async () => {
-  const { people, error } = collectPeople();
-  if (error) {
-    formError.textContent = error;
-    formError.classList.add("show");
-    return;
-  }
-  formError.classList.remove("show");
-
-  const hasUnlisted = people.some(p => p.fromUnlisted || p.homeUnlisted);
+function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
   const resultsEl = document.getElementById("results");
-  resultsEl.innerHTML = `<p class="empty-hint">検索中(実データAPIに接続しています)...</p>`;
-
-  let scored;
-  let dataSourceNote = "";
-  let usedReal = false;
-  try {
-    const workNames = people.map(p => p.from);
-    const homeNames = people.map(p => p.home);
-    // 休日は往路・復路の起点が同じ(自宅)なので、実データAPIの呼び出しを使い回して節約する
-    let workCandidates, homeCandidates;
-    if (departureMode === "weekday") {
-      [workCandidates, homeCandidates] = await Promise.all([
-        fetchRealCandidates(workNames, REAL_DATA_MINUTES),
-        fetchRealCandidates(homeNames, REAL_DATA_MINUTES),
-      ]);
-    } else {
-      workCandidates = await fetchRealCandidates(workNames, REAL_DATA_MINUTES);
-      homeCandidates = workCandidates;
-    }
-
-    const merged = buildScoredFromReal(people, workCandidates, homeCandidates);
-    if (merged.length === 0) {
-      dataSourceNote = `実データAPIでは往復とも全員が${REAL_DATA_MINUTES}分以内に到達できる共通の駅が見つかりませんでした。移動時間の概算値で計算しています。`;
-      scored = buildScoredApprox(people);
-    } else {
-      scored = merged;
-      usedReal = true;
-    }
-  } catch (err) {
-    dataSourceNote = "実データAPI(駅すぱあと)に接続できなかったため、移動時間の概算値で計算しています。";
-    scored = buildScoredApprox(people);
-  }
 
   let sorted;
   if (currentMode === "total") sorted = [...scored].sort((a,b) => a.total - b.total || a.max - b.max);
@@ -1008,12 +979,8 @@ document.getElementById("runBtn").addEventListener("click", async () => {
 
   const sourceBanner = document.createElement("p");
   sourceBanner.className = "result-note" + (usedReal ? " source-real" : "");
-  sourceBanner.textContent = dataSourceNote || `駅すぱあとAPIの実データで計算しました(各人${REAL_DATA_MINUTES}分以内で探索)。`;
+  sourceBanner.textContent = dataSourceNote || `駅すぱあとAPIの実データで計算しました(各人${REAL_DATA_MINUTES}分以内で探索)。モードはAPIを叩き直さずに切り替えられます。`;
   resultsEl.appendChild(sourceBanner);
-
-  // 実データ使用時は toCandidate(集合駅までの移動)は本物なので、未登録駅マークは
-  // 復路計算(常に概算)に影響するhomeUnlistedのみを対象にする
-  const showsMark = usedReal ? people.some(p => p.homeUnlisted) : hasUnlisted;
 
   top.forEach((r, idx) => {
     const div = document.createElement("div");
@@ -1053,6 +1020,59 @@ document.getElementById("runBtn").addEventListener("click", async () => {
   if (top.length === 0) {
     resultsEl.innerHTML = `<p class="empty-hint">候補駅が見つかりませんでした。駅名や上限時間を確認してください。</p>`;
   }
+}
+
+document.getElementById("runBtn").addEventListener("click", async () => {
+  const { people, error } = collectPeople();
+  if (error) {
+    formError.textContent = error;
+    formError.classList.add("show");
+    return;
+  }
+  formError.classList.remove("show");
+
+  const hasUnlisted = people.some(p => p.fromUnlisted || p.homeUnlisted);
+  const resultsEl = document.getElementById("results");
+  lastSearch = null;
+  resultsEl.innerHTML = `<p class="empty-hint">検索中(実データAPIに接続しています)...</p>`;
+
+  let scored;
+  let dataSourceNote = "";
+  let usedReal = false;
+  try {
+    const workNames = people.map(p => p.from);
+    const homeNames = people.map(p => p.home);
+    // 休日は往路・復路の起点が同じ(自宅)なので、実データAPIの呼び出しを使い回して節約する
+    let workCandidates, homeCandidates;
+    if (departureMode === "weekday") {
+      [workCandidates, homeCandidates] = await Promise.all([
+        fetchRealCandidates(workNames, REAL_DATA_MINUTES),
+        fetchRealCandidates(homeNames, REAL_DATA_MINUTES),
+      ]);
+    } else {
+      workCandidates = await fetchRealCandidates(workNames, REAL_DATA_MINUTES);
+      homeCandidates = workCandidates;
+    }
+
+    const merged = buildScoredFromReal(people, workCandidates, homeCandidates);
+    if (merged.length === 0) {
+      dataSourceNote = `実データAPIでは往復とも全員が${REAL_DATA_MINUTES}分以内に到達できる共通の駅が見つかりませんでした。移動時間の概算値で計算しています。`;
+      scored = buildScoredApprox(people);
+    } else {
+      scored = merged;
+      usedReal = true;
+    }
+  } catch (err) {
+    dataSourceNote = "実データAPI(駅すぱあと)に接続できなかったため、移動時間の概算値で計算しています。";
+    scored = buildScoredApprox(people);
+  }
+
+  // 実データ使用時は toCandidate(集合駅までの移動)は本物なので、未登録駅マークは
+  // 復路計算(常に概算)に影響するhomeUnlistedのみを対象にする
+  const showsMark = usedReal ? people.some(p => p.homeUnlisted) : hasUnlisted;
+
+  lastSearch = { scored, usedReal, dataSourceNote, showsMark };
+  renderResults(lastSearch);
 });
 </script>
 
