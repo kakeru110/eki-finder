@@ -18,6 +18,24 @@
 const KANTO_PREFS = ["東京都", "神奈川県", "埼玉県", "千葉県"];
 const MAX_RETRIES_PER_BATCH = 8;
 
+// 駅すぱあとAPIの「平均待ち時間ベース」の計算は、本数の少ない支線だと実際の所要時間より
+// 過大に出る(例: 海芝浦↔鶴見は実際は直通12分程度だがAPIは42分前後を返す)。時刻表データを
+// 持たない買い切り型プランでは区間ごとの正確な補正はできないため、実測値がわかっている駅に
+// ついてのみ、出発/到着どちらかに含まれる場合に一律で分数を差し引く簡易補正を行う。
+const BRANCH_LINE_CORRECTION_MINUTES = { "海芝浦": 30 };
+
+function applyBranchLineCorrection(names, candidates) {
+  const originCorrections = names.map((n) => BRANCH_LINE_CORRECTION_MINUTES[n] || 0);
+  for (const c of candidates.values()) {
+    const destCorrection = BRANCH_LINE_CORRECTION_MINUTES[c.name] || 0;
+    c.minutesByPerson = c.minutesByPerson.map((m, i) => {
+      if (m === null) return m;
+      const correction = Math.max(originCorrections[i], destCorrection);
+      return correction ? Math.max(0, m - correction) : m;
+    });
+  }
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -93,6 +111,8 @@ module.exports = async function handler(req, res) {
     }
     globalOffset += batch.length;
   }
+
+  applyBranchLineCorrection(names, candidates);
 
   // 全員が到達できる駅だけを候補として返す
   const full = [...candidates.values()].filter((c) => c.minutesByPerson.every((m) => m !== null));
