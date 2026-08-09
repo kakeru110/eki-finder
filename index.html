@@ -377,6 +377,21 @@
     margin-bottom: 8px;
   }
   .result-note.source-real { color: var(--good); }
+  .share-img-btn {
+    display: block;
+    width: 100%;
+    margin-top: 4px;
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--accent-2);
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .share-img-btn:active { opacity: 0.8; }
   .empty-hint {
     color: var(--muted);
     font-size: 0.84rem;
@@ -1072,6 +1087,7 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
   sourceBanner.textContent = dataSourceNote || "実データで計算しました(モード切替は再取得なし)";
   resultsEl.appendChild(sourceBanner);
 
+  const cardsForImage = [];
   top.forEach((r, idx) => {
     const div = document.createElement("div");
     div.className = "result-item" + (idx === 0 ? " rank-1" : "");
@@ -1081,11 +1097,12 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
     const oneWaySpread = Math.round(r.spread / 2); // 往復差も同様に片道換算
     const metric = currentMode === "fastest" ? r.max : perPersonOneWay;
     const scoreLabel = currentMode === "fastest" ? "最後の到着まで" : "1人あたり片道";
-    const spreadHtml = currentMode === "fair"
+    const spreadText = currentMode === "fair" ? `みんなの差 ${oneWaySpread}分(片道換算)` : null;
+    const spreadHtml = spreadText
       ? `<div class="score-sub">みんなの差 <b>${oneWaySpread}分</b>(片道換算)</div>`
       : "";
 
-    const perPersonHtml = r.legs.map(l => {
+    const personLines = r.legs.map(l => {
       const unlisted = usedReal ? l.homeUnlisted : (l.fromUnlisted || l.homeUnlisted);
       const mark = unlisted ? " *" : "";
       let extra;
@@ -1101,8 +1118,9 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
         if (usedReal && l.transfersHome != null) extra += `・乗換${l.transfersHome}`;
         extra += `)`;
       }
-      return `<div>${extra}</div>`;
-    }).join("");
+      return extra;
+    });
+    const perPersonHtml = personLines.map(t => `<div>${t}</div>`).join("");
 
     div.innerHTML = `
       <div class="result-head">
@@ -1117,6 +1135,16 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
       <div class="per-person">${perPersonHtml}</div>
     `;
     resultsEl.appendChild(div);
+
+    cardsForImage.push({
+      rank: idx + 1,
+      isTop: idx === 0,
+      candidate: r.candidate,
+      metricText: `${metric}分`,
+      scoreLabel,
+      spreadText,
+      personLines,
+    });
   });
 
   if (showsMark) {
@@ -1130,7 +1158,150 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
 
   if (top.length === 0) {
     resultsEl.innerHTML = `<p class="empty-hint">候補駅が見つかりませんでした。駅名や上限時間を確認してください。</p>`;
+    return;
   }
+
+  const shareBtn = document.createElement("button");
+  shareBtn.className = "share-img-btn";
+  shareBtn.textContent = "📷 画像で保存・共有";
+  shareBtn.addEventListener("click", () => {
+    const modeLabel = MODES.find(m => m.id === currentMode).label;
+    shareResultImage(cardsForImage, {
+      modeLabel,
+      dataSourceText: sourceBanner.textContent,
+    });
+  });
+  resultsEl.appendChild(shareBtn);
+}
+
+// ---- 結果を画像化して保存・共有 ----
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function buildResultImageCanvas(cards, meta) {
+  const W = 640;
+  const PAD = 20;
+  const FONT = '"Hiragino Sans", "Yu Gothic", sans-serif';
+  const LINE_H = 20;
+  const HEADER_H = 84;
+  const SOURCE_H = 26;
+  const SCALE = 2;
+
+  let y = HEADER_H + SOURCE_H;
+  const cardLayout = cards.map(c => {
+    const cardY = y;
+    let h = 14 + 26 + 36; // 上パディング + 駅名行 + スコア行
+    if (c.spreadText) h += 20;
+    h += c.personLines.length * LINE_H;
+    h += 14; // 下パディング
+    y += h + 10;
+    return { y: cardY, h };
+  });
+  y += 24; // フッター
+
+  const H = Math.ceil(y);
+  const canvas = document.createElement("canvas");
+  canvas.width = W * SCALE;
+  canvas.height = H * SCALE;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(SCALE, SCALE);
+  ctx.textBaseline = "top";
+
+  ctx.fillStyle = "#eef8f9";
+  ctx.fillRect(0, 0, W, H);
+
+  const grad = ctx.createLinearGradient(0, 0, W, 0);
+  grad.addColorStop(0, "#0284c7");
+  grad.addColorStop(1, "#0d9488");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, HEADER_H);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `900 22px ${FONT}`;
+  ctx.fillText("🚉 合流駅ファインダー", PAD, 20);
+  ctx.font = `700 14px ${FONT}`;
+  ctx.fillText(meta.modeLabel, PAD, 54);
+
+  ctx.fillStyle = "#5b7d87";
+  ctx.font = `12px ${FONT}`;
+  ctx.fillText(meta.dataSourceText, PAD, HEADER_H + 8);
+
+  cards.forEach((c, idx) => {
+    const { y: cardY, h: cardH } = cardLayout[idx];
+    drawRoundedRect(ctx, PAD, cardY, W - PAD * 2, cardH, 12);
+    ctx.fillStyle = c.isTop ? "#e0f2fe" : "#ffffff";
+    ctx.fill();
+    ctx.lineWidth = c.isTop ? 2 : 1;
+    ctx.strokeStyle = c.isTop ? "#0284c7" : "#d6e9ec";
+    ctx.stroke();
+
+    let ty = cardY + 14;
+    ctx.fillStyle = "#0f2a33";
+    ctx.font = `900 17px ${FONT}`;
+    ctx.fillText(`${c.rank}. ${c.candidate}駅${c.isTop ? "  ★おすすめ" : ""}`, PAD + 14, ty);
+    ty += 28;
+
+    ctx.fillStyle = "#0284c7";
+    ctx.font = `900 26px ${FONT}`;
+    ctx.fillText(c.metricText, PAD + 14, ty);
+    const metricWidth = ctx.measureText(c.metricText).width;
+    ctx.font = `700 12px ${FONT}`;
+    ctx.fillStyle = "#5b7d87";
+    ctx.fillText(c.scoreLabel, PAD + 14 + metricWidth + 8, ty + 10);
+    ty += 34;
+
+    if (c.spreadText) {
+      ctx.font = `13px ${FONT}`;
+      ctx.fillStyle = "#0f2a33";
+      ctx.fillText(c.spreadText, PAD + 14, ty);
+      ty += 20;
+    }
+
+    ctx.font = `13px ${FONT}`;
+    ctx.fillStyle = "#0f2a33";
+    c.personLines.forEach(line => {
+      ctx.fillText(line, PAD + 14, ty);
+      ty += LINE_H;
+    });
+  });
+
+  ctx.fillStyle = "#5b7d87";
+  ctx.font = `11px ${FONT}`;
+  ctx.textAlign = "center";
+  ctx.fillText("kakeru110.github.io/eki-finder", W / 2, H - 20);
+  ctx.textAlign = "left";
+
+  return canvas;
+}
+
+async function shareResultImage(cards, meta) {
+  const canvas = buildResultImageCanvas(cards, meta);
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+  if (!blob) return;
+  const file = new File([blob], "合流駅ファインダー.png", { type: "image/png" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: "合流駅ファインダー" });
+      return;
+    } catch (e) {
+      if (e && e.name === "AbortError") return; // ユーザーが共有をキャンセルした場合は何もしない
+      // 共有に失敗した場合はダウンロードにフォールバックする
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "合流駅ファインダー.png";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 const runBtn = document.getElementById("runBtn");
