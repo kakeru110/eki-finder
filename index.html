@@ -868,7 +868,7 @@ document.addEventListener("click", (e) => {
 // ---- モードタブ ----
 const MODES = [
   { id: "total", label: "📊 合計最短", desc: "全員の往復移動時間(職場⇄集合駅⇄自宅)の合計が最も短い駅を優先します。" },
-  { id: "fair", label: "⚖️ 公平重視", desc: "往復移動時間の差(一番遠い人と近い人の差)が最も小さい駅を優先します。" },
+  { id: "fair", label: "⚖️ 公平重視", desc: "合計最短の上位候補の中から、往復移動時間の差(一番遠い人と近い人の差)が最も小さい駅を選びます。" },
   { id: "fastest", label: "🏃 最速集合", desc: "最後の1人が到着するまでの時間が最も短い駅を優先します。" },
 ];
 let currentMode = "total";
@@ -1000,19 +1000,20 @@ function buildScoredApprox(people) {
 function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
   const resultsEl = document.getElementById("results");
 
+  const RESULT_COUNT = 6;
   let sorted;
   if (currentMode === "total") sorted = [...scored].sort((a,b) => a.total - b.total || a.max - b.max);
   else if (currentMode === "fair") {
-    // spreadの1分単位の差だけで厳密に比較すると、たまたま差が同じだった遠方駅が
-    // 明らかに近い駅より上位に来てしまう(例: 差1分の八王子が差1分の青葉台と並ぶ)。
-    // 往復差を10分(片道換算5分)刻みのtierにまとめ、同程度に公平な範囲内では
-    // 合計時間が短い方を優先する。
-    const fairTier = r => Math.floor(r.spread / 10);
-    sorted = [...scored].sort((a,b) => fairTier(a) - fairTier(b) || a.total - b.total || a.spread - b.spread);
+    // spreadだけで比較すると、公平さのために全員の移動時間そのものが底上げされた
+    // 駅(例: 全員片道40分で横並び)が、合計最短の駅(例: 片道21分)より上位に来てしまう。
+    // そこで「合計最短」の上位RESULT_COUNT駅という現実的に速い候補に絞り込んでから、
+    // その中で往復差が最も小さい駅を選ぶ。
+    const fastestPool = [...scored].sort((a,b) => a.total - b.total || a.max - b.max).slice(0, RESULT_COUNT);
+    sorted = fastestPool.sort((a,b) => a.spread - b.spread || a.total - b.total);
   }
   else sorted = [...scored].sort((a,b) => a.max - b.max || a.total - b.total); // fastest
 
-  const top = sorted.slice(0, 6);
+  const top = sorted.slice(0, RESULT_COUNT);
   resultsEl.innerHTML = "";
 
   const sourceBanner = document.createElement("p");
