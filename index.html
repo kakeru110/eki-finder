@@ -723,6 +723,7 @@ function addPerson() {
   peopleIds.push(nextId++);
   lastSearch = null;
   renderPeople();
+  saveState();
 }
 function removePerson(id) {
   if (peopleIds.length <= MIN_PEOPLE) return;
@@ -730,6 +731,7 @@ function removePerson(id) {
   peopleData.delete(id);
   lastSearch = null;
   renderPeople();
+  saveState();
 }
 
 for (let i = 0; i < 3; i++) { peopleIds.push(nextId++); }
@@ -754,6 +756,7 @@ dayToggle.addEventListener("click", (e) => {
   lastSearch = null;
   renderDayToggle();
   renderPeople();
+  saveState();
 });
 renderDayToggle();
 
@@ -773,6 +776,7 @@ peopleGrid.addEventListener("input", (e) => {
     updateSuggestions(e.target);
     clearFieldError(e.target);
   }
+  saveState();
 });
 
 // ---- 駅名オートコンプリート(候補にない場合は「未登録駅として使う」を提示) ----
@@ -883,6 +887,7 @@ function renderModeTabs() {
       currentMode = m.id;
       renderModeTabs();
       if (lastSearch) renderResults(lastSearch);
+      saveState();
     });
     modeTabs.appendChild(btn);
   });
@@ -890,6 +895,58 @@ function renderModeTabs() {
   modeDesc.textContent = active.desc;
 }
 renderModeTabs();
+
+// ---- 状態の保存・復元(localStorage + 共有URL) ----
+// URLの?state=を優先して復元し(共有リンクを開いた場合)、なければ前回訪問時の
+// localStorageから復元する。復元後は自動ではURLを書き換えない(ブックマークURLが
+// 勝手に汚れるのを避けるため)。以降、入力を変更するたびにURL・localStorage両方を更新する。
+const STORAGE_KEY = "eki-finder-state-v1";
+function currentStateObj() {
+  return {
+    day: departureMode,
+    mode: currentMode,
+    people: peopleIds.map(id => {
+      const d = ensureData(id);
+      return { n: d.name, w: d.work, h: d.home };
+    }),
+  };
+}
+function saveState() {
+  const json = JSON.stringify(currentStateObj());
+  try { localStorage.setItem(STORAGE_KEY, json); } catch (e) { /* 無効化されている場合は無視 */ }
+  try {
+    const url = new URL(location.href);
+    url.searchParams.set("state", json);
+    history.replaceState(null, "", url);
+  } catch (e) { /* file://等replaceStateが使えない環境は無視 */ }
+}
+function loadState() {
+  try {
+    const fromUrl = new URLSearchParams(location.search).get("state");
+    const json = fromUrl || localStorage.getItem(STORAGE_KEY);
+    if (!json) return null;
+    const s = JSON.parse(json);
+    if (!s || !Array.isArray(s.people) || s.people.length < MIN_PEOPLE) return null;
+    return s;
+  } catch (e) { return null; }
+}
+function applyState(s) {
+  if (s.day === "workHome" || s.day === "homeOnly") departureMode = s.day;
+  if (MODES.some(m => m.id === s.mode)) currentMode = s.mode;
+  peopleIds = [];
+  peopleData.clear();
+  nextId = 1;
+  s.people.slice(0, MAX_PEOPLE).forEach(p => {
+    const id = nextId++;
+    peopleIds.push(id);
+    peopleData.set(id, { name: p.n || "", work: p.w || "", home: p.h || "" });
+  });
+  renderDayToggle();
+  renderPeople();
+  renderModeTabs();
+}
+const restoredState = loadState();
+if (restoredState) applyState(restoredState);
 
 // ---- 入力の収集とバリデーション ----
 function collectPeople() {
