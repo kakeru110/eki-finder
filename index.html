@@ -1002,7 +1002,14 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
 
   let sorted;
   if (currentMode === "total") sorted = [...scored].sort((a,b) => a.total - b.total || a.max - b.max);
-  else if (currentMode === "fair") sorted = [...scored].sort((a,b) => a.spread - b.spread || a.total - b.total);
+  else if (currentMode === "fair") {
+    // spreadの1分単位の差だけで厳密に比較すると、たまたま差が同じだった遠方駅が
+    // 明らかに近い駅より上位に来てしまう(例: 差1分の八王子が差1分の青葉台と並ぶ)。
+    // 往復差を10分(片道換算5分)刻みのtierにまとめ、同程度に公平な範囲内では
+    // 合計時間が短い方を優先する。
+    const fairTier = r => Math.floor(r.spread / 10);
+    sorted = [...scored].sort((a,b) => fairTier(a) - fairTier(b) || a.total - b.total || a.spread - b.spread);
+  }
   else sorted = [...scored].sort((a,b) => a.max - b.max || a.total - b.total); // fastest
 
   const top = sorted.slice(0, 6);
