@@ -287,6 +287,7 @@
     box-shadow: 0 4px 14px rgba(2,132,199,0.32);
   }
   .run-btn:active { opacity: 0.88; transform: translateY(1px); }
+  .run-btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .form-error {
     font-size: 0.78rem;
     color: var(--danger);
@@ -418,7 +419,7 @@
   <div class="head-row">
     <h1>🚉 合流駅ファインダー</h1>
   </div>
-  <p>何人でも(2〜8人)の職場・自宅最寄駅を入力して、公平に集まれる駅を提案します</p>
+  <p>2〜8人の最寄駅から、公平に集まれる駅を提案します</p>
 </header>
 
 <main>
@@ -429,7 +430,6 @@
       <button type="button" data-day="homeOnly" class="active">🏠 自宅だけ</button>
       <button type="button" data-day="workHome">🏢 職場と自宅</button>
     </div>
-    <p class="mode-desc" id="dayDesc"></p>
     <div class="people-grid" id="peopleGrid"></div>
     <button class="add-person-btn" id="addPersonBtn">＋ 人を追加</button>
   </section>
@@ -440,9 +440,7 @@
     <p class="mode-desc" id="modeDesc"></p>
     <button class="run-btn" id="runBtn">合流駅を探す</button>
     <p class="form-error" id="formError"></p>
-    <p class="notice">
-      ⚠️ 駅すぱあとAPI(実データ)で集合駅までの往復移動時間を計算します。API接続に失敗した場合は駅の位置関係からの<strong>概算値</strong>にフォールバックします。
-    </p>
+    <p class="notice">⚠️ 実データAPIで計算(失敗時は概算値にフォールバック)</p>
   </section>
 
   <section class="card">
@@ -744,14 +742,10 @@ peopleGrid.addEventListener("click", (e) => {
 });
 
 const dayToggle = document.getElementById("dayToggle");
-const dayDesc = document.getElementById("dayDesc");
 function renderDayToggle() {
   [...dayToggle.querySelectorAll("button")].forEach(btn => {
     btn.classList.toggle("active", btn.dataset.day === departureMode);
   });
-  dayDesc.textContent = departureMode === "workHome"
-    ? "職場↔集合駅と集合駅↔自宅の合計時間で計算(両方入力)"
-    : "自宅↔集合駅の往復で計算(職場は不要)";
 }
 dayToggle.addEventListener("click", (e) => {
   const btn = e.target.closest("button[data-day]");
@@ -867,9 +861,9 @@ document.addEventListener("click", (e) => {
 
 // ---- モードタブ ----
 const MODES = [
-  { id: "total", label: "📊 合計最短", desc: "全員の往復移動時間(職場⇄集合駅⇄自宅)の合計が最も短い駅を優先します。" },
-  { id: "fair", label: "⚖️ 公平重視", desc: "合計最短の上位候補の中から、往復移動時間の差(一番遠い人と近い人の差)が最も小さい駅を選びます。" },
-  { id: "fastest", label: "🏃 最速集合", desc: "最後の1人が到着するまでの時間が最も短い駅を優先します。" },
+  { id: "total", label: "📊 合計最短", desc: "全員の往復時間の合計が最短の駅" },
+  { id: "fair", label: "⚖️ 公平重視", desc: "合計最短の候補の中で、一番差が小さい駅" },
+  { id: "fastest", label: "🏃 最速集合", desc: "最後の1人が到着するまでが最短の駅" },
 ];
 let currentMode = "total";
 const modeTabs = document.getElementById("modeTabs");
@@ -1018,7 +1012,7 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
 
   const sourceBanner = document.createElement("p");
   sourceBanner.className = "result-note" + (usedReal ? " source-real" : "");
-  sourceBanner.textContent = dataSourceNote || `駅すぱあとAPIの実データで計算しました(各人${REAL_DATA_MINUTES}分以内で探索)。モードはAPIを叩き直さずに切り替えられます。`;
+  sourceBanner.textContent = dataSourceNote || "実データで計算しました(モード切替は再取得なし)";
   resultsEl.appendChild(sourceBanner);
 
   top.forEach((r, idx) => {
@@ -1082,7 +1076,8 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
   }
 }
 
-document.getElementById("runBtn").addEventListener("click", async () => {
+const runBtn = document.getElementById("runBtn");
+runBtn.addEventListener("click", async () => {
   const { people, error } = collectPeople();
   if (error) {
     formError.textContent = error;
@@ -1095,6 +1090,8 @@ document.getElementById("runBtn").addEventListener("click", async () => {
   const resultsEl = document.getElementById("results");
   lastSearch = null;
   resultsEl.innerHTML = `<p class="empty-hint">検索中(実データAPIに接続しています)...</p>`;
+  runBtn.disabled = true;
+  runBtn.textContent = "検索中...";
 
   let scored;
   let dataSourceNote = "";
@@ -1133,6 +1130,9 @@ document.getElementById("runBtn").addEventListener("click", async () => {
 
   lastSearch = { scored, usedReal, dataSourceNote, showsMark };
   renderResults(lastSearch);
+  runBtn.disabled = false;
+  runBtn.textContent = "合流駅を探す";
+  resultsEl.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 </script>
 
