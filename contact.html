@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>お問い合わせ｜合流駅ファインダー</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="合流駅ファインダーへのお問い合わせフォームです。ご意見・不具合報告・未登録駅のご連絡などをお寄せください。">
+<style>
+  :root {
+    --bg: #eef8f9;
+    --card: #ffffff;
+    --accent: #0284c7;
+    --accent-2: #0d9488;
+    --text: #0f2a33;
+    --muted: #5b7d87;
+    --border: #d6e9ec;
+    --good: #16a34a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Zen Maru Gothic", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    color: #fff;
+    padding: 13px 16px 11px;
+  }
+  header h1 { margin: 0; font-size: 1.1rem; }
+  header p { margin: 4px 0 0; font-size: 0.78rem; opacity: 0.95; }
+  main {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 14px 12px 32px;
+  }
+  .back-link {
+    display: inline-block;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+    color: var(--accent-2);
+    text-decoration: none;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .intro { font-size: 0.82rem; color: var(--text); margin: 0 0 12px; }
+  .sent-banner {
+    background: #ecfdf5;
+    color: var(--good);
+    border: 1px solid #a7f3d0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+  }
+  form { display: flex; flex-direction: column; gap: 10px; }
+  label { display: flex; flex-direction: column; gap: 3px; font-size: 0.78rem; color: var(--muted); }
+  .required { color: #e11d48; font-size: 0.68rem; margin-left: 4px; }
+  input, textarea {
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #fff;
+    color: var(--text);
+  }
+  textarea { resize: vertical; }
+  button {
+    margin-top: 4px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .disclaimer { font-size: 0.66rem; color: var(--muted); margin-top: 10px; }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b1a20;
+      --card: #102630;
+      --accent: #38bdf8;
+      --accent-2: #2dd4bf;
+      --text: #e3f4f6;
+      --muted: #86aab3;
+      --border: #1d3944;
+    }
+    input, textarea { background: #0d1e25; color: var(--text); }
+    .sent-banner { background: #0f2a20; border-color: #14532d; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🚉 合流駅ファインダー</h1>
+  <p>お問い合わせ</p>
+</header>
+
+<main>
+  <a class="back-link" href="index.html">← ツールに戻る</a>
+  <div class="card">
+    <p class="intro">ご意見・不具合報告・未登録駅のご連絡などをお寄せください。いただいた内容は運営者宛にメールで届きます。</p>
+
+    <div id="sentBanner" class="sent-banner" hidden>✅ 送信しました。ありがとうございます。</div>
+
+    <form action="https://formsubmit.co/kakeru.senoo@gmail.com" method="POST">
+      <input type="hidden" name="_subject" value="【合流駅ファインダー】お問い合わせ">
+      <input type="hidden" name="_template" value="table">
+      <input type="hidden" name="_captcha" value="true">
+      <input type="hidden" name="_next" value="https://kakeru110.github.io/eki-finder/contact.html?sent=1">
+      <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
+
+      <label>
+        お名前(任意)
+        <input type="text" name="name" placeholder="山田太郎" autocomplete="name">
+      </label>
+      <label>
+        メールアドレス<span class="required">必須</span>
+        <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+      </label>
+      <label>
+        件名(任意)
+        <input type="text" name="subject" placeholder="例: 未登録駅について">
+      </label>
+      <label>
+        お問い合わせ内容<span class="required">必須</span>
+        <textarea name="message" rows="6" placeholder="内容をご記入ください" required></textarea>
+      </label>
+      <button type="submit">送信する</button>
+    </form>
+
+    <p class="disclaimer">このフォームは外部サービス(FormSubmit)を利用して送信内容をメールに転送しています。個人情報(お名前・メールアドレス等)はお問い合わせ対応の目的以外には使用しません。</p>
+  </div>
+</main>
+
+<script>
+  if (new URLSearchParams(location.search).get("sent") === "1") {
+    document.getElementById("sentBanner").hidden = false;
+  }
+</script>
+</body>
+</html>
