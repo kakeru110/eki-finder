@@ -22,13 +22,15 @@
 <meta name="theme-color" content="#0284c7">
 <style>
   :root {
-    --bg: #eef8f9;
+    --bg: #eef1f4;
     --card: #ffffff;
-    --accent: #0284c7;
-    --accent-2: #0d9488;
-    --text: #0f2a33;
-    --muted: #5b7d87;
-    --border: #d6e9ec;
+    --accent: #1c3a5e;
+    --accent-dark: #142b47;
+    --accent-2: #f28c1a;
+    --text: #1f2430;
+    --muted: #5b6472;
+    --border: #d7dce2;
+    --accent-soft: #e7ecf2;
   }
   * { box-sizing: border-box; }
   body {
@@ -38,14 +40,20 @@
     color: var(--text);
   }
   header {
-    background: linear-gradient(120deg, var(--accent), var(--accent-2));
-    color: #fff;
-    padding: 13px 16px 11px;
+    background: var(--card);
+    border-bottom: 3px solid var(--accent);
+    color: var(--text);
+    padding: 12px 16px;
   }
   header .head-inner { max-width: 560px; margin: 0 auto; }
-  header h1 { margin: 0; font-size: 1.1rem; }
-  header h1 a { color: inherit; text-decoration: none; }
-  header p { margin: 4px 0 0; font-size: 0.78rem; opacity: 0.95; }
+  header h1 { margin: 0; font-size: 1.1rem; font-weight: 900; }
+  header h1 a { color: var(--accent); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+  header h1 a .logo-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; background: var(--accent); border-radius: 5px; flex-shrink: 0;
+  }
+  header h1 a .logo-mark svg { width: 14px; height: 14px; }
+  header p { margin: 5px 0 0; font-size: 0.78rem; color: var(--muted); }
   main {
     max-width: 560px;
     margin: 0 auto;
@@ -55,41 +63,45 @@
     display: inline-block;
     margin-bottom: 10px;
     font-size: 0.8rem;
-    color: var(--accent-2);
+    color: var(--accent);
+    font-weight: 700;
     text-decoration: none;
   }
   .category { margin-bottom: 14px; }
   .category h2 {
     font-size: 0.86rem;
-    color: var(--accent-2);
+    color: var(--accent);
     margin: 0 0 6px;
+    font-weight: 900;
   }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 4px;
     padding: 12px 14px;
   }
   .faq-item + .faq-item { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
   .faq-q { font-size: 0.86rem; font-weight: 700; color: var(--text); margin: 0; }
   .faq-a { font-size: 0.82rem; color: var(--muted); margin: 4px 0 0; line-height: 1.6; }
-  .faq-a a { color: var(--accent-2); }
+  .faq-a a { color: var(--accent); }
   .contact-cta {
     margin-top: 16px;
     font-size: 0.8rem;
     color: var(--muted);
     text-align: center;
   }
-  .contact-cta a { color: var(--accent-2); }
+  .contact-cta a { color: var(--accent); font-weight: 700; }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0b1a20;
-      --card: #102630;
-      --accent: #38bdf8;
-      --accent-2: #2dd4bf;
-      --text: #e3f4f6;
-      --muted: #86aab3;
-      --border: #1d3944;
+      --bg: #12161c;
+      --card: #1b212b;
+      --accent: #6f9bc9;
+      --accent-dark: #0a0f16;
+      --accent-2: #f6a53d;
+      --text: #e8ecf1;
+      --muted: #93a0b0;
+      --border: #2c3542;
+      --accent-soft: #1f2a38;
     }
   }
 </style>
@@ -114,7 +126,7 @@
 
 <header>
   <div class="head-inner">
-    <h1><a href="index.html">🚉 集合駅ナビ</a></h1>
+    <h1><a href="index.html"><span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 13h16M8 21l2-4h4l2 4M9 9h.01M15 9h.01"/></svg></span>集合駅ナビ</a></h1>
     <p>よくある質問</p>
   </div>
 </header>
