@@ -80,6 +80,21 @@
     margin: 0 auto;
   }
   header h1 { margin: 0; font-size: 1.2rem; font-weight: 900; white-space: nowrap; }
+  header .head-links {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+  }
+  header .head-links a {
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-decoration: none;
+    background: rgba(255,255,255,0.18);
+    padding: 4px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
   header p { position: relative; margin: 3px 0 0; opacity: 0.95; font-size: 0.78rem; max-width: 720px; margin-left: auto; margin-right: auto; }
   main {
     max-width: 720px;
@@ -468,6 +483,7 @@
 <header>
   <div class="head-row">
     <h1>🚉 合流駅ファインダー</h1>
+    <nav class="head-links"><a href="faq.html">❓ よくある質問</a><a href="contact.html">✉️ お問い合わせ</a></nav>
   </div>
   <p>2〜8人の最寄駅から、公平に集まれる駅を提案します</p>
 </header>
