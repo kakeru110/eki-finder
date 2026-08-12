@@ -515,8 +515,8 @@
   <section class="card">
     <h2>1. 最寄駅を入力 <span class="count-badge" id="peopleCountBadge"></span></h2>
     <div class="day-toggle" id="dayToggle">
-      <button type="button" data-day="homeOnly" class="active">🏠 自宅だけ</button>
-      <button type="button" data-day="workHome">🏢 職場と自宅</button>
+      <button type="button" data-day="homeOnly" class="active">自宅だけ</button>
+      <button type="button" data-day="workHome">職場と自宅</button>
     </div>
     <div class="people-grid" id="peopleGrid"></div>
     <button class="add-person-btn" id="addPersonBtn">＋ 人を追加</button>
@@ -1058,9 +1058,9 @@ document.addEventListener("click", (e) => {
 
 // ---- モードタブ ----
 const MODES = [
-  { id: "total", label: "📊 合計最短", desc: "全員の往復時間の合計が最短の駅" },
-  { id: "fair", label: "⚖️ 公平重視", desc: "合計最短の候補の中で、一番差が小さい駅" },
-  { id: "fastest", label: "🏃 最速集合", desc: "最後の1人が到着するまでが最短の駅" },
+  { id: "total", label: "合計最短", desc: "全員の往復時間の合計が最短の駅" },
+  { id: "fair", label: "公平重視", desc: "合計最短の候補の中で、一番差が小さい駅" },
+  { id: "fastest", label: "最速集合", desc: "最後の1人が到着するまでが最短の駅" },
 ];
 let currentMode = "total";
 const modeTabs = document.getElementById("modeTabs");
@@ -1344,7 +1344,7 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
 
   const shareBtn = document.createElement("button");
   shareBtn.className = "share-img-btn";
-  shareBtn.textContent = "📷 画像で保存・共有";
+  shareBtn.textContent = "画像で保存・共有";
   shareBtn.addEventListener("click", () => {
     const modeLabel = MODES.find(m => m.id === currentMode).label;
     shareResultImage(cardsForImage, {
