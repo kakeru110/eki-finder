@@ -13,7 +13,8 @@
 
 - `index.html`: フロントエンド(単一HTML)。駅名入力・モード選択・結果表示を行う
 - `contact.html`: お問い合わせフォーム。[FormSubmit](https://formsubmit.co/)(サインアップ不要の無料フォーム転送サービス)経由で運営者(kakeru.senoo@gmail.com)にメールが届く。バックエンドを持たない静的サイトでもフォーム送信を実現するための仕組み(`tokyo-bay-fishing`プロジェクトの`docs/contact.html`と同じパターン)
-- SEO/PWA関連ファイル: `favicon.svg`/`favicon.png`/`apple-touch-icon.png`/`icon-192.png`/`icon-512.png`(アイコン、Playwrightでheadless描画してPNG化)、`og-image.png`(SNS共有時のプレビュー画像)、`manifest.json`(ホーム画面追加用)、`robots.txt`、`sitemap.xml`。`index.html`/`contact.html`にOGP・Twitterカード・canonical・meta descriptionを設定済み。`index.html`にはWebApplicationのJSON-LD構造化データと簡易FAQセクションも追加
+- `faq.html`: よくある質問ページ。基本/使い方/精度・データ/その他の4カテゴリで構成。当初`index.html`内に埋め込んでいたが、メインUIをコンパクトに保つため独立ページに分離した。`FAQPage`のJSON-LD構造化データも設定(検索結果でのFAQリッチリザルト表示を狙う)
+- SEO/PWA関連ファイル: `favicon.svg`/`favicon.png`/`apple-touch-icon.png`/`icon-192.png`/`icon-512.png`(アイコン、Playwrightでheadless描画してPNG化)、`og-image.png`(SNS共有時のプレビュー画像)、`manifest.json`(ホーム画面追加用)、`robots.txt`、`sitemap.xml`(index/faq/contactの3ページを掲載)。`index.html`/`faq.html`/`contact.html`全ページにOGP・Twitterカード・canonical・meta descriptionを設定済み。`index.html`にはWebApplicationのJSON-LD構造化データも追加
 - `api/multi-range.js`: Vercelサーバーレス関数。`EKISPERT_API_KEY`をサーバー側の環境変数として保持し、駅すぱあとAPIの「範囲探索(multipleRange)」を中継する。ブラウザにAPIキーを露出させないための唯一の目的
 - 入力パターンは「🏠 自宅だけ」(デフォルト、職場欄自体を非表示にし自宅のみ入力。自宅が往復共通の起点でAPI呼び出しを1回に節約)と「🏢 職場と自宅」(職場→集合駅の往路と集合駅→自宅の復路、両方必須)の2つ。切り替えても入力済みの値は保持される
 - `合計最短`/`公平重視`は往復合計・往復差で計算し、`最速集合`は到着(往路のみ)で判定する。ランキングは往復合計・往復差のまま行うが、画面には「1人あたり片道○分」(往復合計 ÷ 人数 ÷ 2)を表示する。往復の数字は普段イメージしにくいため、片道の体感時間に近い値を見せつつ、帰りの所要時間も判定には反映され続けるようにしている。`公平重視`ではさらに「みんなの差○分」(往復差 ÷ 2、片道換算)も表示する

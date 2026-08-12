@@ -419,9 +419,6 @@
     text-align: center;
     padding: 16px 0;
   }
-  .faq .faq-item { margin-top: 8px; }
-  .faq .faq-q { font-size: 0.8rem; font-weight: 700; color: var(--text); margin: 0; }
-  .faq .faq-a { font-size: 0.78rem; color: var(--muted); margin: 2px 0 0; }
   footer {
     text-align: center;
     color: var(--muted);
@@ -501,26 +498,10 @@
     <div id="results"><p class="empty-hint">駅を入力して「合流駅を探す」を押してください</p></div>
   </section>
 
-  <section class="card faq">
-    <h2>よくある質問</h2>
-    <div class="faq-item">
-      <p class="faq-q">Q. 料金はかかりますか?</p>
-      <p class="faq-a">A. 無料で誰でも使えます。会員登録も不要です。</p>
-    </div>
-    <div class="faq-item">
-      <p class="faq-q">Q. どのエリアの駅に対応していますか?</p>
-      <p class="faq-a">A. 実データAPIは全国の駅名を検索できますが、候補一覧のサジェストは主に関東の主要路線・駅を収録しています。候補にない駅名でも「未登録駅として使う」を選べば計算できます。</p>
-    </div>
-    <div class="faq-item">
-      <p class="faq-q">Q. 移動時間はどれくらい正確ですか?</p>
-      <p class="faq-a">A. 駅すぱあとAPIの実データで計算しますが、平均待ち時間ベースの計算のため、本数の少ない支線などでは実際とずれる場合があります。API接続に失敗した場合は駅の位置関係からの概算値になります。</p>
-    </div>
-  </section>
-
 </main>
 
 <footer>
-  合流駅ファインダーは誰でも無料で使える公開ツールです。実データは駅すぱあとAPIで計算(候補<span id="candidateCount"></span>駅)。<a href="contact.html">お問い合わせ</a>
+  合流駅ファインダーは誰でも無料で使える公開ツールです。実データは駅すぱあとAPIで計算(候補<span id="candidateCount"></span>駅)。<a href="faq.html">よくある質問</a> / <a href="contact.html">お問い合わせ</a>
 </footer>
 
 <script>
