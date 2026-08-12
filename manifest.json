@@ -1,7 +1,7 @@
 {
   "name": "えきどこ",
   "short_name": "えきどこ",
-  "description": "2〜8人の最寄駅から、公平に集まれる駅を提案します",
+  "description": "最寄駅を入れるだけで、公平に集まれる駅を提案します",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
