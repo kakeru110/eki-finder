@@ -332,15 +332,6 @@
     display: none;
   }
   .form-error.show { display: block; }
-  .notice {
-    font-size: 0.7rem;
-    color: var(--warn);
-    background: var(--warn-soft);
-    border: 1px solid #f1dcb0;
-    border-radius: 10px;
-    padding: 6px 8px;
-    margin-top: 6px;
-  }
   #results { margin-top: 2px; }
   .result-item {
     border: 1px solid var(--border);
@@ -507,7 +498,6 @@
     <p class="mode-desc" id="modeDesc"></p>
     <button class="run-btn" id="runBtn">合流駅を探す</button>
     <p class="form-error" id="formError"></p>
-    <p class="notice">⚠️ 実データAPIで計算(失敗時は概算値にフォールバック)</p>
   </section>
 
   <section class="card">
@@ -518,7 +508,7 @@
 </main>
 
 <footer>
-  合流駅ファインダーは誰でも無料で使える公開ツールです。実データは駅すぱあとAPIで計算(候補<span id="candidateCount"></span>駅)。<a href="faq.html">よくある質問</a> / <a href="contact.html">お問い合わせ</a>
+  合流駅ファインダーは誰でも無料で使える公開ツールです。<a href="faq.html">よくある質問</a> / <a href="contact.html">お問い合わせ</a>
 </footer>
 
 <script>
@@ -789,7 +779,6 @@ const STATIONS = [
 ];
 
 const stationMap = new Map(STATIONS.map(s => [s[0], {lat:s[1], lon:s[2]}]));
-document.getElementById("candidateCount").textContent = STATIONS.length;
 
 function haversineKm(a, b) {
   const R = 6371;
