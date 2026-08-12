@@ -15,8 +15,9 @@
 
 ## 公開URL
 
-- フロントエンド(GitHub Pages): https://kakeru110.github.io/eki-finder/
+- フロントエンド(GitHub Pages、独自ドメイン): https://shugo-eki.com/(旧URL https://kakeru110.github.io/eki-finder/ はGitHub Pagesが自動的にリダイレクトする)
 - APIプロキシ(Vercel): https://eki-finder.vercel.app/api/multi-range
+- 独自ドメインはお名前.comで購入。GitHub Pages向けのAレコード(`185.199.108-111.153`)をお名前.comのDNSレコード設定に登録し、リポジトリ直下の`CNAME`ファイルに`shugo-eki.com`を記載することで有効化した。購入時、対象ドメインのネームサーバーが「初期設定」のままだと(お名前.comのネームサーバーに切り替えていないと)DNSレコード設定が反映されないので注意
 
 ジョルダン「乗換案内オープンAPI」の登録フォームで求められる「公開URL」には、GitHub PagesのURLを使用してください(ただしジョルダンの審査は非公開URL用途と判断され却下されたため、現在は駅すぱあとAPIに接続している)。再申請する場合は、フッターに「誰でも無料で使える公開ツール」である旨と運営者への問い合わせ導線(`contact.html`)を用意済み。
 

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://kakeru110.github.io/eki-finder/sitemap.xml
+Sitemap: https://shugo-eki.com/sitemap.xml
