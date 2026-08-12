@@ -11,6 +11,7 @@
 - 角丸(border-radius)を14px前後の大きな丸みから4px前後の実務的な小さい丸みに縮小、カードの影(box-shadow)を廃止して枠線ベースに
 - ヘッダー上に紺色の細いユーティリティバー(よくある質問・お問い合わせ)を常設し、本体ヘッダーは白背景+下線で構成
 - 機能・JS側のID/クラス名は一切変更していない(見た目のみの変更)
+- **フォントを「Zen Maru Gothic」(丸ゴシック、Google Fonts)から標準の角ゴシック(`-apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic Medium", Meiryo`等のOS標準フォントスタック)に変更**。丸ゴシックはNotion風ツールやAI生成・vibe-coding系アプリで多用される書体で、「AIが作った感」の最大の原因だった。Yahoo!路線情報・ジョルダン・駅探はいずれも角ゴシックで、丸ゴシックは使われていない。Google Fontsの読み込み自体も削除したため外部フォント依存がなくなった
 
 ## 公開URL
 
