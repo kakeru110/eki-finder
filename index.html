@@ -2,19 +2,19 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>えきどこ｜公平な集合駅をすぐ提案</title>
+<title>集合駅ナビ｜公平に集まれる駅をすぐ提案</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="職場・自宅の最寄駅を入力するだけで、公平に集まれる駅を提案する無料ツールです。実データ(駅すぱあとAPI)で往復移動時間を計算します。">
 <link rel="canonical" href="https://kakeru110.github.io/eki-finder/">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="えきどこ">
-<meta property="og:title" content="えきどこ｜公平な集合駅をすぐ提案">
+<meta property="og:site_name" content="集合駅ナビ">
+<meta property="og:title" content="集合駅ナビ｜公平に集まれる駅をすぐ提案">
 <meta property="og:description" content="職場・自宅の最寄駅を入力するだけで、公平に集まれる駅を提案する無料ツールです。">
 <meta property="og:url" content="https://kakeru110.github.io/eki-finder/">
 <meta property="og:image" content="https://kakeru110.github.io/eki-finder/og-image.png">
 <meta property="og:locale" content="ja_JP">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="えきどこ｜公平な集合駅をすぐ提案">
+<meta name="twitter:title" content="集合駅ナビ｜公平に集まれる駅をすぐ提案">
 <meta name="twitter:description" content="職場・自宅の最寄駅を入力するだけで、公平に集まれる駅を提案する無料ツールです。">
 <meta name="twitter:image" content="https://kakeru110.github.io/eki-finder/og-image.png">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -24,7 +24,7 @@
 <meta name="theme-color" content="#0284c7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="えきどこ">
+<meta name="apple-mobile-web-app-title" content="集合駅ナビ">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -475,7 +475,7 @@
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "えきどこ",
+  "name": "集合駅ナビ",
   "url": "https://kakeru110.github.io/eki-finder/",
   "description": "職場・自宅の最寄駅を入力するだけで、公平に集まれる駅を提案する無料ツールです。",
   "applicationCategory": "UtilitiesApplication",
@@ -489,7 +489,7 @@
 
 <header>
   <div class="head-row">
-    <h1><a href="index.html">🚉 えきどこ</a></h1>
+    <h1><a href="index.html">🚉 集合駅ナビ</a></h1>
     <nav class="head-links"><a href="faq.html">❓ よくある質問</a><a href="contact.html">✉️ お問い合わせ</a></nav>
   </div>
   <p>最寄駅を入れるだけで、公平に集まれる駅を提案します</p>
@@ -527,7 +527,7 @@
 </main>
 
 <footer>
-  えきどこは誰でも無料で使える公開ツールです。<a href="faq.html">よくある質問</a> / <a href="contact.html">お問い合わせ</a>
+  集合駅ナビは誰でも無料で使える公開ツールです。<a href="faq.html">よくある質問</a> / <a href="contact.html">お問い合わせ</a>
 </footer>
 
 <script>
@@ -1394,7 +1394,7 @@ function buildResultImageCanvas(cards, meta) {
   ctx.fillRect(0, 0, W, HEADER_H);
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 22px ${FONT}`;
-  ctx.fillText("🚉 えきどこ", PAD, 20);
+  ctx.fillText("🚉 集合駅ナビ", PAD, 20);
   ctx.font = `700 14px ${FONT}`;
   ctx.fillText(meta.modeLabel, PAD, 54);
 
@@ -1454,10 +1454,10 @@ async function shareResultImage(cards, meta) {
   const canvas = buildResultImageCanvas(cards, meta);
   const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
   if (!blob) return;
-  const file = new File([blob], "えきどこ.png", { type: "image/png" });
+  const file = new File([blob], "集合駅ナビ.png", { type: "image/png" });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: "えきどこ" });
+      await navigator.share({ files: [file], title: "集合駅ナビ" });
       return;
     } catch (e) {
       if (e && e.name === "AbortError") return; // ユーザーが共有をキャンセルした場合は何もしない
@@ -1467,7 +1467,7 @@ async function shareResultImage(cards, meta) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "えきどこ.png";
+  a.download = "集合駅ナビ.png";
   document.body.appendChild(a);
   a.click();
   a.remove();
