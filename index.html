@@ -1264,14 +1264,17 @@ function renderResults({ scored, usedReal, dataSourceNote, showsMark }) {
     const personLines = r.legs.map(l => {
       const unlisted = usedReal ? l.homeUnlisted : (l.fromUnlisted || l.homeUnlisted);
       const mark = unlisted ? " *" : "";
+      // 誰がどの駅から来るか分かるよう、名前の横に出発駅(自宅だけモードは自宅駅、
+      // 職場と自宅モードは職場駅→自宅駅)を添える
+      const stationLabel = departureMode === "homeOnly" ? `(${l.home})` : `(${l.from}→${l.home})`;
       let extra;
       if (departureMode === "homeOnly") {
         // 自宅だけモードは往路=復路なので内訳を書かない
-        extra = `${l.name}${mark}: 往復${l.roundTrip}分(片道${l.toCandidate}分`;
+        extra = `${l.name}${stationLabel}${mark}: 往復${l.roundTrip}分(片道${l.toCandidate}分`;
         if (usedReal && l.transfersOut != null) extra += `・乗換${l.transfersOut}`;
         extra += `)`;
       } else {
-        extra = `${l.name}${mark}: 往復${l.roundTrip}分(往${l.toCandidate}分`;
+        extra = `${l.name}${stationLabel}${mark}: 往復${l.roundTrip}分(往${l.toCandidate}分`;
         if (usedReal && l.transfersOut != null) extra += `・乗換${l.transfersOut}`;
         extra += `+復${l.toHome}分`;
         if (usedReal && l.transfersHome != null) extra += `・乗換${l.transfersHome}`;
