@@ -4,6 +4,27 @@
 <meta charset="UTF-8">
 <title>合流駅ファインダー</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="2〜8人の職場・自宅最寄駅を入力するだけで、公平に集まれる駅を提案する無料ツールです。実データ(駅すぱあとAPI)で往復移動時間を計算します。">
+<link rel="canonical" href="https://kakeru110.github.io/eki-finder/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="合流駅ファインダー">
+<meta property="og:title" content="合流駅ファインダー">
+<meta property="og:description" content="2〜8人の職場・自宅最寄駅を入力するだけで、公平に集まれる駅を提案する無料ツールです。">
+<meta property="og:url" content="https://kakeru110.github.io/eki-finder/">
+<meta property="og:image" content="https://kakeru110.github.io/eki-finder/og-image.png">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="合流駅ファインダー">
+<meta name="twitter:description" content="2〜8人の職場・自宅最寄駅を入力するだけで、公平に集まれる駅を提案する無料ツールです。">
+<meta name="twitter:image" content="https://kakeru110.github.io/eki-finder/og-image.png">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0284c7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="合流駅ファインダー">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -398,6 +419,9 @@
     text-align: center;
     padding: 16px 0;
   }
+  .faq .faq-item { margin-top: 8px; }
+  .faq .faq-q { font-size: 0.8rem; font-weight: 700; color: var(--text); margin: 0; }
+  .faq .faq-a { font-size: 0.78rem; color: var(--muted); margin: 2px 0 0; }
   footer {
     text-align: center;
     color: var(--muted);
@@ -428,6 +452,19 @@
     .result-item.rank-1 { background: linear-gradient(135deg, var(--accent-soft), #103b39); }
   }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "合流駅ファインダー",
+  "url": "https://kakeru110.github.io/eki-finder/",
+  "description": "2〜8人の職場・自宅最寄駅を入力するだけで、公平に集まれる駅を提案する無料ツールです。",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Web",
+  "inLanguage": "ja",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+}
+</script>
 </head>
 <body>
 
@@ -462,6 +499,22 @@
   <section class="card">
     <h2>3. 提案結果</h2>
     <div id="results"><p class="empty-hint">駅を入力して「合流駅を探す」を押してください</p></div>
+  </section>
+
+  <section class="card faq">
+    <h2>よくある質問</h2>
+    <div class="faq-item">
+      <p class="faq-q">Q. 料金はかかりますか?</p>
+      <p class="faq-a">A. 無料で誰でも使えます。会員登録も不要です。</p>
+    </div>
+    <div class="faq-item">
+      <p class="faq-q">Q. どのエリアの駅に対応していますか?</p>
+      <p class="faq-a">A. 実データAPIは全国の駅名を検索できますが、候補一覧のサジェストは主に関東の主要路線・駅を収録しています。候補にない駅名でも「未登録駅として使う」を選べば計算できます。</p>
+    </div>
+    <div class="faq-item">
+      <p class="faq-q">Q. 移動時間はどれくらい正確ですか?</p>
+      <p class="faq-a">A. 駅すぱあとAPIの実データで計算しますが、平均待ち時間ベースの計算のため、本数の少ない支線などでは実際とずれる場合があります。API接続に失敗した場合は駅の位置関係からの概算値になります。</p>
+    </div>
   </section>
 
 </main>
