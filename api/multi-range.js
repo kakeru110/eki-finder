@@ -36,6 +36,23 @@ function applyBranchLineCorrection(names, candidates) {
   }
 }
 
+// 平均待ち時間探索は「出発時の待ち時間」は最初の1本にも乗せて計算する一方、乗換時に
+// 実際に生じる乗換先の平均待ち時間はごくわずか(本数の多い幹線に乗り換える場合など)しか
+// 乗らないことがある。実際の乗換には歩行・ホーム移動等で数分かかるのが通例のため、
+// 乗換回数(TransferCount)1回につき固定でTRANSFER_WAIT_MINUTESを加算する補正を行う。
+const TRANSFER_WAIT_MINUTES = 3;
+
+function applyTransferWaitBuffer(candidates) {
+  for (const c of candidates.values()) {
+    c.minutesByPerson = c.minutesByPerson.map((m, i) => {
+      if (m === null) return m;
+      const transfers = c.transfersByPerson[i];
+      if (!transfers) return m;
+      return m + transfers * TRANSFER_WAIT_MINUTES;
+    });
+  }
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -113,6 +130,7 @@ module.exports = async function handler(req, res) {
   }
 
   applyBranchLineCorrection(names, candidates);
+  applyTransferWaitBuffer(candidates);
 
   // 全員が到達できる駅だけを候補として返す
   const full = [...candidates.values()].filter((c) => c.minutesByPerson.every((m) => m !== null));
