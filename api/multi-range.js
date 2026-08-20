@@ -18,6 +18,56 @@
 const KANTO_PREFS = ["東京都", "神奈川県", "埼玉県", "千葉県"];
 const MAX_RETRIES_PER_BATCH = 8;
 
+// 駅すぱあとAPI(買い切り型)は合計5,000リクエストで打ち止め、自動更新はされない。
+// Vercel KV(Upstash Redis)にリクエスト件数を記録し、閾値到達時にFormSubmit経由で
+// 運営者にメール通知する。KV未設定の場合は何もせず通常通り動作する(検索自体は止めない)。
+const KV_URL = process.env.KV_REST_API_URL;
+const KV_TOKEN = process.env.KV_REST_API_TOKEN;
+const USAGE_COUNT_KEY = "ekispert_request_count";
+const USAGE_THRESHOLDS = [4500, 4900, 5000];
+const NOTIFY_EMAIL = "kakeru.senoo@gmail.com";
+
+async function trackEkispertUsage() {
+  if (!KV_URL || !KV_TOKEN) return;
+  try {
+    const authHeader = { Authorization: `Bearer ${KV_TOKEN}` };
+    const incrRes = await fetch(`${KV_URL}/incr/${USAGE_COUNT_KEY}`, { headers: authHeader });
+    const { result: count } = await incrRes.json();
+
+    for (const threshold of USAGE_THRESHOLDS) {
+      if (count < threshold) continue;
+      // setnxで「この閾値は通知済みか」を記録し、閾値ごとに一度だけ通知する
+      const setRes = await fetch(`${KV_URL}/setnx/notified_${threshold}/1`, { headers: authHeader });
+      const { result: wasFirstTime } = await setRes.json();
+      if (wasFirstTime === 1) {
+        await notifyUsageThreshold(threshold, count);
+      }
+    }
+  } catch (err) {
+    console.error("usage tracking failed", err);
+  }
+}
+
+async function notifyUsageThreshold(threshold, count) {
+  const reachedLimit = count >= 5000;
+  const message = reachedLimit
+    ? `駅すぱあとAPI(買い切り型、上限5,000件)の使用件数が${count}件に到達し、上限を使い切りました。以降は実データAPIが使えず、概算値へのフォールバックのみになります。追加購入等の対応が必要です。`
+    : `駅すぱあとAPI(買い切り型、上限5,000件)の使用件数が${count}件に到達しました。上限まで残りわずかです。`;
+  const body = new URLSearchParams({
+    _subject: `【集合駅ナビ】駅すぱあとAPI使用件数が${threshold}件に到達`,
+    message,
+  });
+  try {
+    await fetch(`https://formsubmit.co/ajax/${NOTIFY_EMAIL}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
+      body,
+    });
+  } catch (err) {
+    console.error("usage notification failed", err);
+  }
+}
+
 // 駅すぱあとAPIの「平均待ち時間ベース」の計算は、本数の少ない支線だと実際の所要時間より
 // 過大に出る(例: 海芝浦↔鶴見は実際は直通12分程度だがAPIは42分前後を返す)。時刻表データを
 // 持たない買い切り型プランでは区間ごとの正確な補正はできないため、実測値がわかっている駅に
@@ -182,6 +232,7 @@ async function callMultiRange(apiKey, baseNames, upperMinute) {
   } catch (err) {
     throw new Error(`ekispert APIに接続できませんでした: ${err}`);
   }
+  await trackEkispertUsage(); // 実際にAPIへ届いた時点でカウント(成功/エラー応答に関わらず1件消費とみなす)
   const data = await r.json().catch(() => null);
   if (!data || !data.ResultSet) {
     throw new Error(`ekispert APIの応答が不正です(HTTP ${r.status})`);
